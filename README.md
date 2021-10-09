@@ -53,7 +53,7 @@ I'm aware this is something you shouldn't do here.
 
 1. Install [node.js][].
 
-1. Open the command line and navigate to the folder where you put this project.
+1. Open the command line and navigate to [Platform/easy-containers/][].
 
 1. Run `npm i` to install the dependencies.
 
@@ -89,4 +89,4 @@ If everything went alright, when opening the console you should see a message sa
 
 [src]: Platform/easy-containers/src
 
-[Ts-Coversions]: https://github.com/CarlosLeyvaAyala/Papyrus-2-Typescript/conversions
+[Ts-Coversions]: https://github.com/CarlosLeyvaAyala/Papyrus-2-Typescript/tree/main/conversions
