@@ -32,6 +32,7 @@ I'll later add the option to configure them.
 - [Skyrim Platform][]
 - [JContainers][]
 - [JContainers typescript definitions][Ts-Coversions]
+- [DM-Lib-Typescript][]
 
 ## Building
 
@@ -130,3 +131,4 @@ Just putting this as a reminder on how to work.
 
 [Ts-Coversions]: https://github.com/CarlosLeyvaAyala/Papyrus-2-Typescript/tree/main/conversions
 
+[DM-Lib-Typescript]: https://github.com/CarlosLeyvaAyala/DM-Lib-Typescript
