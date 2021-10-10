@@ -1,0 +1,5 @@
+{
+  "loggingLevel": "verbose",
+  "hkMark1": 16,
+  "hkTransfer1": 17
+}

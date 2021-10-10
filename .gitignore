@@ -102,3 +102,6 @@ dist
 
 # TernJS port file
 .tern-port
+tsconfig.json
+Platform/easy-containers/DM-Lib
+Platform/easy-containers/.vscode/numbered-bookmarks.json

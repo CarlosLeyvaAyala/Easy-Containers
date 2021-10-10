@@ -9,9 +9,8 @@
         "strictNullChecks": true,
         "strictPropertyInitialization": true,
         "module": "System",
-        "target": "ES5",
+        "target": "ES2015",
         "outFile": "../Plugins/easy-containers.js",
-        "rootDir": "",
         "lib": [
             "ES2015"
         ],

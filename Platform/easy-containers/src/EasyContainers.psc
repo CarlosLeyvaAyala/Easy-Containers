@@ -1,8 +1,10 @@
 Scriptname EasyContainers Hidden
 {
-  Not part of Max Sick Gains, but added here because the foundation to make this work was done there.
+  Added just for illustration purposes. This was an early version of the mod and it
+  used MCM Helper (https://www.nexusmods.com/skyrimspecialedition/mods/53000) for firing
+  both `MarkItems()` and `TransferItems()`.
 
-  ;FIXME: Move this to its own mod.
+  You can actually compile and test this to see how hilariosly slow is sorry Papyrus.
 }
 
 Function MarkItems() Global
