@@ -1,9 +1,19 @@
 import * as D from "DM-Lib/Debug"
 import * as Hotkey from "DM-Lib/Hotkeys"
 import { ForEachItemR } from "DM-Lib/Iteration"
+import { K } from "DM-Lib/Combinators"
 import * as JDB from "JContainers/JDB"
 import * as JFormMap from "JContainers/JFormMap"
-import { Actor, Debug, Game, on, printConsole } from "skyrimPlatform"
+import {
+  Actor,
+  Container,
+  Debug,
+  Furniture,
+  Game,
+  ObjectReference,
+  on,
+  printConsole,
+} from "skyrimPlatform"
 
 export function main() {
   /** Internal name */
@@ -46,62 +56,104 @@ export function main() {
     JDB.solveObjSetter(basePath, h, true)
   }
 
+  /**
+   * General item management function.
+   *
+   * @remarks
+   * This function:
+   * - Gets a container to work on.
+   * - Gets a database handle.
+   * - If the container exists:
+   *    - Shows a message.
+   *    - Does something with that handle.
+   * - If not
+   *    - Runs another function.
+   * - Shows the result of the operation.
+   *
+   * @param msgBefore Message to show before processing.
+   * @param Process Function that expects an `ObjectReference` and an integer database handle. Returns a string.
+   * @param OnNoContainer: Function that accepts a database handle and returns a string.
+   */
+  function ManageItems(
+    msgBefore: string,
+    Process: (container: ObjectReference, dbHandle: number) => string,
+    OnNoContainer: (dbHandle: number) => string
+  ) {
+    /** Do actual processing */
+    const DoProcessing = (c: ObjectReference, h: number) => {
+      // Show some message
+      Debug.notification(msgBefore)
+      LogV(msgBefore)
+
+      // Do something with the provided handle
+      return Process(c, h)
+    }
+
+    // Get container
+    const cn = Game.getCurrentCrosshairRef()
+    // Get a database handle
+    const hd = LogVT("Database handle", GetDbHandle())
+    // Do something with the handle
+    const msgAfter = !cn ? OnNoContainer(hd) : DoProcessing(cn, hd)
+
+    // Show the operation results
+    LogV(msgAfter)
+    Debug.messageBox(msgAfter)
+  }
+
   /** Marks all items in some container. */
   function DoMarkItems() {
-    const container = Game.getCurrentCrosshairRef()
-    if (!container) return
+    ManageItems(
+      "Marking items in container.",
+      (c, h) => {
+        let n = 0
+        let i = 0
+        ForEachItemR(c, (item) => {
+          const name = item?.getName()
+          const exists = LogVT(
+            `Trying to add ${name} to database. Already added?`,
+            JFormMap.hasKey(h, item)
+          )
 
-    Debug.notification("Marking items in container.")
+          n++
+          if (exists) return
+          JFormMap.setInt(h, item, 0) // `value` is irrelevant; we only want the `key` (item) to be added
+          i++
+          LogI(`${name} was added to database`)
+        })
 
-    const a = LogVT("Mark. Database handle", GetDbHandle())
-
-    let n = 0
-    let i = 0
-    ForEachItemR(container, (item) => {
-      const name = item?.getName()
-      const exists = LogVT(
-        `Trying to add ${name} to database. Already added?`,
-        JFormMap.hasKey(a, item)
-      )
-
-      n++
-      if (exists) return
-      JFormMap.setInt(a, item, 0) // `value` is irrelevant; we only want the `key` (item) to be added
-      i++
-      LogI(`${name} was added to database`)
-    })
-
-    SaveDbHandle(a)
-
-    Debug.messageBox(`${n} items were marked (${i} new)`)
+        SaveDbHandle(h)
+        return `${n} items were marked (${i} new)`
+      },
+      K("Select a valid container")
+    )
   }
 
   /** Transfers all marked items in player inventory to the selected container in the crosshair.\
    * Equiped and favorited items are not transferred.
    */
   function DoTransferItems() {
-    const container = Game.getCurrentCrosshairRef()
-    if (!container) return
+    ManageItems(
+      "Transferring items to container.",
+      (c, h) => {
+        const p = Game.getPlayer() as Actor
+        let n = 0
+        ForEachItemR(p, (item) => {
+          if (
+            !JFormMap.hasKey(h, item) ||
+            p.isEquipped(item) ||
+            p.getEquippedObject(0) === item ||
+            Game.isObjectFavorited(item)
+          )
+            return
 
-    Debug.notification("Transferring items to container.")
-
-    const p = Game.getPlayer() as Actor
-    const a = LogVT("Transfer. Database handle", GetDbHandle())
-    let n = 0
-    ForEachItemR(p, (item) => {
-      if (
-        !JFormMap.hasKey(a, item) ||
-        p.isEquipped(item) ||
-        p.getEquippedObject(0) === item ||
-        Game.isObjectFavorited(item)
-      )
-        return
-
-      p.removeItem(item, p.getItemCount(item), true, container) // Remove all items belonging to the marked type
-      n++
-    })
-
-    Debug.messageBox(`${n} items were transferred`)
+          p.removeItem(item, p.getItemCount(item), true, c) // Remove all items belonging to the marked type
+          n++
+        })
+        return `${n} items were transferred`
+      },
+      K("Select a valid container")
+    )
   }
 
   /** React when the player presses the "Mark" hotkey. */
