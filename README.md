@@ -15,7 +15,7 @@ If you want to add more to the Marked List, just put new items inside some conta
 
 Whenever you have Marked items in inventory, all of them will be moved to any container under the crosshair. 
 
-- Put some container over the crosshair. 
+- Put the crosshair over some container. 
 - Press the "transfer" hotkey. 
 - All Marked items will be transferred to that container. 
 
@@ -31,11 +31,13 @@ Settings:
   - `"info"`: Detailed info so players can know if things are going as expected, but not enough for actual debugging.
   - `"verbose"`: Info meant for developers. Use it for reporting errors or unexpected behavior.
 
-  You must respect word casing and double quotes, otherwise you'll get `"verbose"` level, no matter what.
+  You must use that word casing (double quotes included) as is, otherwise you'll get `"verbose"` level, no matter what.
 
 - `hkMark1`: Hotkey for marking items inside a chest.
 
 - `hkTransfer1`: Hotkey for transferring marked items
+
+See [DXScanCodes][] for possible hotkey values.
 
 ## Hard requirements
 
@@ -157,3 +159,5 @@ Just putting this as a reminder for myself on how to work.
 [rootdirs]: https://www.typescriptlang.org/tsconfig#rootDirs
 
 [baseUrl]: https://www.typescriptlang.org/tsconfig#baseUrl
+
+[DXScanCodes]: https://www.creationkit.com/index.php?title=Input_Script#DXScanCodes
