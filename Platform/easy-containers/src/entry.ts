@@ -49,13 +49,14 @@ export function main() {
   /** Marks all items in some container. */
   function DoMarkItems() {
     const container = Game.getCurrentCrosshairRef()
-
     if (!container) return
 
     Debug.notification("Marking items in container.")
 
     const a = LogVT("Mark. Database handle", GetDbHandle())
 
+    let n = 0
+    let i = 0
     ForEachItemR(container, (item) => {
       const name = item?.getName()
       const exists = LogVT(
@@ -63,14 +64,16 @@ export function main() {
         JFormMap.hasKey(a, item)
       )
 
+      n++
       if (exists) return
       JFormMap.setInt(a, item, 0) // `value` is irrelevant; we only want the `key` (item) to be added
+      i++
       LogI(`${name} was added to database`)
     })
 
     SaveDbHandle(a)
 
-    Debug.messageBox("All items were marked")
+    Debug.messageBox(`${n} items were marked (${i} new)`)
   }
 
   /** Transfers all marked items in player inventory to the selected container in the crosshair.\

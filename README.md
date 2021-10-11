@@ -33,9 +33,9 @@ Settings:
 
   You must use that word casing (double quotes included) as is, otherwise you'll get `"verbose"` level, no matter what.
 
-- `hkMark1`: Hotkey for marking items inside a chest.
+- `hkMark1`: Hotkey for marking items inside a chest  (default Q).
 
-- `hkTransfer1`: Hotkey for transferring marked items
+- `hkTransfer1`: Hotkey for transferring marked items  (default W).
 
 See [DXScanCodes][] for possible hotkey values.
 
@@ -65,12 +65,10 @@ Since this plugin is also meant to serve as a guide to [Skyrim Platform][] newco
 
 You can compile and run that version to see how hilariously slow and clumsy is Papyrus compared to [Skyrim Platform][].
 
-As I said, I expect this plugin to be used as guide to newcomers. That's why I included the [genereated *.js plugin][Plugins-Path] so you can just download it and test it right away.\
-I'm aware this is something you shouldn't do here.
 
 ### Before  building
 
-The sess hassle-free way to develop plugins is to just put [Skyrim Platform][] files in the Skyrim Data folder.
+The less hassle-free way to develop plugins is to just put [Skyrim Platform][] files in the Skyrim Data folder.
 
 Should be trivial if you use Vortex, but with MO that would mean folder pollution.\
 Do it anyway, it's really the best way. You will lose plugin hot-reloading by using MO2 **for developing**.

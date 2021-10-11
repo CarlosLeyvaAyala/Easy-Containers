@@ -107,3 +107,5 @@ Platform/easy-containers/DM-Lib
 Platform/easy-containers/.vscode/numbered-bookmarks.json
 Platform/easy-containers/index.js
 *.zip
+Platform/easy-containers/skyrimPlatform.ts
+*.js
