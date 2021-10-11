@@ -6,7 +6,7 @@ Batch move unwanted items to any container.
 First you need to "mark" some items so this mod knows you want to get rid of them. 
 
 - Put your unwanted items inside any container. 
-- Make sure the game crosshair is over that container (it should appear the "Activate" message) . 
+- Make sure the game crosshair is over that container (the "Activate" message ***must*** be there). 
 - Use "mark item" hotkey to remember those items. 
 - If you get the message pop-up, your items will now be remembered. 
 
@@ -19,18 +19,39 @@ Whenever you have Marked items in inventory, all of them will be moved to any co
 - Press the "transfer" hotkey. 
 - All Marked items will be transferred to that container. 
 
-Right now, hotkeys are hardcoded to:
+## Configuration
+The plugin can be configured in `Data\Platform\Plugins\easy-containers-settings.txt`.
 
-- Mark: `num4`
-- Transfer: `num5`
+Settings:
+- `loggingLevel`: How much spam do you want in your Skyrim console?\
+  Possible values:
 
-I'll later add the option to configure them.
+  - `"none"`: No spam.
+  - `"error"`: Just errors and stuff like that.
+  - `"info"`: Detailed info so players can know if things are going as expected, but not enough for actual debugging.
+  - `"verbose"`: Info meant for developers. Use it for reporting errors or unexpected behavior.
+
+  You must respect word casing and double quotes, otherwise you'll get `"verbose"` level, no matter what.
+
+- `hkMark1`: Hotkey for marking items inside a chest.
+
+- `hkTransfer1`: Hotkey for transferring marked items
+
+## Hard requirements
+
+You'll need these mods to make it work.
+
+- [Skyrim Platform][]
+- [JContainers][]
+
+
+# Developing
 
 ## Dependencies
 
+All player dependencies plus:
+
 - [node.js][]
-- [Skyrim Platform][]
-- [JContainers][]
 - [JContainers typescript definitions][Ts-Coversions]
 - [DM-Lib-Typescript][]
 
@@ -47,12 +68,14 @@ I'm aware this is something you shouldn't do here.
 
 ### Before  building
 
-Less hassle-free to develop plugins is to just put [Skyrim Platform][] files in the Skyrim Data folder.
+The sess hassle-free way to develop plugins is to just put [Skyrim Platform][] files in the Skyrim Data folder.
 
 Should be trivial if you use Vortex, but with MO that would mean folder pollution.\
 Do it anyway, it's really the best way. You will lose plugin hot-reloading by using MO2 **for developing**.
 
 ### Building steps for beginners
+
+1. Put Typescript [dependencies](#dependencies) in the folder where `skyrimPlatform.ts` is located (`<Skyrim Data path>\Platform\Modules`).
 
 1. Install [node.js][].
 
@@ -70,7 +93,7 @@ Do it anyway, it's really the best way. You will lose plugin hot-reloading by us
    ```
    
 1. You will likely want to have this project inside its own folder. \
-Copy the file named `tsconfig-default.json` inside its own folder and rename it as `tsconfig.json`, then add both `"rootDirs"` and `"baseUrl"` entries to `tsconfig.json`.
+Copy the file named `tsconfig-default.json` inside its own folder and rename it as `tsconfig.json`, then add both [`"rootDirs"`][rootdirs] and [`"baseUrl"`][baseUrl] entries to `tsconfig.json`.
 
     ```json
         ...
@@ -93,8 +116,6 @@ Copy the file named `tsconfig-default.json` inside its own folder and rename it 
         ...
     ```
 
-1. Put library dependencies in the folder where `skyrimPlatform.ts` is located (`<Skyrim Data path>\Platform\Modules`).
-
 1. Run `npm run dev`.\
 If everything is ok, the message `Found 0 errors, installing easy-containers.js` will appear.
 
@@ -106,14 +127,14 @@ If everything went alright, when opening the console you should see a message sa
 
 ### Optional step 
 
-Since I'm creating a library while developing plugins, I want to have easy access to it, so:
+Since I'm creating a [library][DM-Lib-Typescript] while developing plugins, I want to have easy access to it, so:
 
 1. Create a **symbolic link** to DM-Lib in the same directory where `tsconfig.json` is. \
 Use [Link Shell Extension][] for that.
 
 You don't care about this step for building this project, but I do.
 
-Just putting this as a reminder on how to work.
+Just putting this as a reminder for myself on how to work.
 
 [JContainers]: https://www.nexusmods.com/skyrimspecialedition/mods/16495
 
@@ -132,3 +153,7 @@ Just putting this as a reminder on how to work.
 [Ts-Coversions]: https://github.com/CarlosLeyvaAyala/Papyrus-2-Typescript/tree/main/conversions
 
 [DM-Lib-Typescript]: https://github.com/CarlosLeyvaAyala/DM-Lib-Typescript
+
+[rootdirs]: https://www.typescriptlang.org/tsconfig#rootDirs
+
+[baseUrl]: https://www.typescriptlang.org/tsconfig#baseUrl

@@ -105,3 +105,4 @@ dist
 tsconfig.json
 Platform/easy-containers/DM-Lib
 Platform/easy-containers/.vscode/numbered-bookmarks.json
+Platform/easy-containers/index.js

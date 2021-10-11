@@ -14,6 +14,13 @@ System.register("Steam/steamapps/common/Skyrim Special Edition/Data/Platform/Mod
     "use strict";
     var skyrimPlatform_1, LoggingLevel;
     var __moduleName = context_2 && context_2.id;
+    /**
+     * Gets the logging level from some configuration file.
+     *
+     * @param pluginName Name of the plugin to get the value from.
+     * @param optionName Name of the variable that carries the value.
+     * @returns The logging level from file. `verbose` if value was invalid.
+     */
     function ReadLoggingFromSettings(pluginName, optionName) {
         const l = skyrimPlatform_1.settings[pluginName][optionName];
         const l2 = typeof l === "string" ? l : "None";
@@ -61,8 +68,14 @@ System.register("Steam/steamapps/common/Skyrim Special Edition/Data/Platform/Mod
      * "debuggeable" at the same time.
      *
      * @example
+     * const IntToHex = (x: number) => x.toString(16)
      * const LogAndInit = TapLog(printConsole)
-     * const x = LogAndInit("Value for x", 3) // -> "Value for x: 3". Meanwhile: x === 3.
+     *
+     * // "Value for x: 3". Meanwhile: x === 3.
+     * const x = LogAndInit("Value for x", 3)
+     *
+     * // "Hex: ff". Meanwhile: ff === 255
+     * const ff = LogAndInit("Hex", 255, IntToHex)
      *
      * // Don't know what the next call will yield, but we can log it to console to see it!
      * const form = LogAndInit("Found form", Game.getFormFromFile(0x3bba, "Skyrim.esm"))
@@ -107,11 +120,12 @@ System.register("Steam/steamapps/common/Skyrim Special Edition/Data/Platform/Mod
         ],
         execute: function () {
             /** How much will the console be spammed.
-             * - Optimization - Meant to only output the times functions take to execute. Used for bottleneck solving.
-             * - None
-             * - Error - Just errors
-             * - Info - Detailed info so the players can know if things are going as expected, but not enough for actual debugging.
-             * - Verbose - Info meant for developers.
+             * - optimization     Meant to only output the times functions take to execute. Used for bottleneck solving.
+             *
+             * - none       No spam.
+             * - error      Just errors and stuff like that.
+             * - info       Detailed info so players can know if things are going as expected, but not enough for actual debugging.
+             * - verbose    Info meant for developers. Use it for reporting errors or unexpected behavior.
              */
             (function (LoggingLevel) {
                 LoggingLevel[LoggingLevel["optimization"] = -1] = "optimization";
@@ -131,6 +145,18 @@ System.register("Steam/steamapps/common/Skyrim Special Edition/Data/Platform/Mod
     "use strict";
     var skyrimPlatform_2, DoNothing, DoNothingOnHold, LogPress, LogRelease, LogHold;
     var __moduleName = context_3 && context_3.id;
+    /**
+     * Gets a hotkey from some configuration file.
+     *
+     * @param pluginName Name of the plugin to get the value from.
+     * @param optionName Name of the variable that carries the value.
+     * @returns The hotkey. `-1` if invalid.
+     */
+    function ReadFromSettings(pluginName, optionName) {
+        const l = skyrimPlatform_2.settings[pluginName][optionName];
+        return typeof l === "number" ? l : -1;
+    }
+    exports_3("ReadFromSettings", ReadFromSettings);
     /**
      * Listens for some Hotkey press / release / hold.
      *
@@ -391,97 +417,6 @@ System.register("Steam/steamapps/common/Skyrim Special Edition/Data/Platform/Mod
         }
     };
 });
-System.register("Steam/steamapps/common/Skyrim Special Edition/Data/Platform/Modules/DM-Lib/Misc", ["Steam/steamapps/common/Skyrim Special Edition/Data/Platform/Modules/skyrimPlatform"], function (exports_5, context_5) {
-    "use strict";
-    var skyrimPlatform_3;
-    var __moduleName = context_5 && context_5.id;
-    /**
-     * Avoids a function to be executed many times at the same time.
-     *
-     * @param f The function to wrap.
-     * @returns A function that will be called only once when the engine
-     * tries to spam it.
-     *
-     * @remarks
-     * Sometimes the engine is so fast a function may be called many times
-     * in a row. For example, the `OnSleepStart` event may be fired 4 times
-     * in a row, thus executing a function those 4 times, even when it was
-     * intended to run only once.
-     *
-     * This function will make a function in that situation to be called
-     * only once, as expected.
-     *
-     * @see {@link ListenPapyrusEvent} for a useful sample usage.
-     *
-     * @warning
-     * Since this function is a "closure" it needs to be used outside loops
-     * and things that may redefine the inner variables inside it.
-     *
-     * If this function doesn't appear to work, try to use it outside the
-     * current execution block.
-     *
-     * @example
-     * let f = () => { printConsole("Only once") }
-     * f = AvoidRapidFire(f)
-     *
-     * // The engine is so fast this will actually work
-     * f()
-     * f()
-     * f()
-     */
-    function AvoidRapidFire(f) {
-        let lastExecuted = 0;
-        return () => {
-            const t = skyrimPlatform_3.Utility.getCurrentGameTime();
-            if (lastExecuted === t)
-                return;
-            lastExecuted = t;
-            f();
-        };
-    }
-    exports_5("AvoidRapidFire", AvoidRapidFire);
-    /**
-     * Waits for a Papyrus event named `eventName` to be fired.
-     *
-     * @param eventName
-     * @returns A function that accepts a `Context` and the function `f` that will be
-     * executed when the `papyrusEventName` inside that context is the same as
-     * `eventName`.
-     *
-     * @remarks
-     * Some events fire many times at the same time. It's advisable to wrap `f`
-     * with {@link AvoidRapidFire} to avoid executing the same function over and over.
-     *
-     * @example
-     * const SleepStart = ListenPapyrusEvent("OnSleepStart")
-     * let OnSleepStart = () => { printConsole("I just started sleeping") }
-     * OnSleepStart = AvoidRapidFire(OnSleepStart)
-     *
-     * hooks.sendPapyrusEvent.add({
-     *   enter(ctx) {
-     *     SleepStart(ctx, OnSleepStart)
-     *     // SleepStart(ctx, AvoidRapidFire(OnSleepStart)) <- DON'T DO THIS. AvoidRapidFire won't work here. It needs to be used outside the event hook.
-     *   },
-     * })
-     */
-    function ListenPapyrusEvent(eventName) {
-        return function (c, f) {
-            if (eventName !== c.papyrusEventName)
-                return;
-            f();
-        };
-    }
-    exports_5("ListenPapyrusEvent", ListenPapyrusEvent);
-    return {
-        setters: [
-            function (skyrimPlatform_3_1) {
-                skyrimPlatform_3 = skyrimPlatform_3_1;
-            }
-        ],
-        execute: function () {
-        }
-    };
-});
 /*
 This file was automatically generated by Papyrus-2-Typescript.exe
 https://github.com/CarlosLeyvaAyala/Papyrus-2-Typescript
@@ -497,10 +432,10 @@ to the folder where `skyrimPlatform.ts` is found, otherwise you'll get
 If you want to have this script in some other place, just change the
 relative path of each `import`.
 */
-System.register("Steam/steamapps/common/Skyrim Special Edition/Data/Platform/Modules/JContainers/JDB", ["Steam/steamapps/common/Skyrim Special Edition/Data/Platform/Modules/skyrimPlatform"], function (exports_6, context_6) {
+System.register("Steam/steamapps/common/Skyrim Special Edition/Data/Platform/Modules/JContainers/JDB", ["Steam/steamapps/common/Skyrim Special Edition/Data/Platform/Modules/skyrimPlatform"], function (exports_5, context_5) {
     "use strict";
     var sp, sn, solveFlt, solveInt, solveStr, solveObj, solveForm, solveFltSetter, solveIntSetter, solveStrSetter, solveObjSetter, solveFormSetter, setObj, hasPath, allKeys, allValues, writeToFile, root;
-    var __moduleName = context_6 && context_6.id;
+    var __moduleName = context_5 && context_5.id;
     return {
         setters: [
             function (sp_1) {
@@ -521,33 +456,33 @@ System.register("Steam/steamapps/common/Skyrim Special Edition/Data/Platform/Mod
                 
                 then JDB.solveFlt(".frostfall.exposureRate") will return 0.5 and
                 JDB.solveObj(".frostfall.arrayC") will return the array containing ["stringValue", 1.5, 10, 1.14] values */
-            exports_6("solveFlt", solveFlt = (path, defaultVal = 0.0) => sn.solveFlt(path, defaultVal));
-            exports_6("solveInt", solveInt = (path, defaultVal = 0) => sn.solveInt(path, defaultVal));
-            exports_6("solveStr", solveStr = (path, defaultVal = "") => sn.solveStr(path, defaultVal));
-            exports_6("solveObj", solveObj = (path, defaultVal = 0) => sn.solveObj(path, defaultVal));
-            exports_6("solveForm", solveForm = (path, defaultVal = null) => sn.solveForm(path, defaultVal));
+            exports_5("solveFlt", solveFlt = (path, defaultVal = 0.0) => sn.solveFlt(path, defaultVal));
+            exports_5("solveInt", solveInt = (path, defaultVal = 0) => sn.solveInt(path, defaultVal));
+            exports_5("solveStr", solveStr = (path, defaultVal = "") => sn.solveStr(path, defaultVal));
+            exports_5("solveObj", solveObj = (path, defaultVal = 0) => sn.solveObj(path, defaultVal));
+            exports_5("solveForm", solveForm = (path, defaultVal = null) => sn.solveForm(path, defaultVal));
             /** Attempts to assign the @value. Returns false if no such path.
                 If 'createMissingKeys=true' it creates any missing path elements: JDB.solveIntSetter(".frostfall.keyB", 10, true) creates {frostfall: {keyB: 10}} structure */
-            exports_6("solveFltSetter", solveFltSetter = (path, value, createMissingKeys = false) => sn.solveFltSetter(path, value, createMissingKeys));
-            exports_6("solveIntSetter", solveIntSetter = (path, value, createMissingKeys = false) => sn.solveIntSetter(path, value, createMissingKeys));
-            exports_6("solveStrSetter", solveStrSetter = (path, value, createMissingKeys = false) => sn.solveStrSetter(path, value, createMissingKeys));
-            exports_6("solveObjSetter", solveObjSetter = (path, value, createMissingKeys = false) => sn.solveObjSetter(path, value, createMissingKeys));
-            exports_6("solveFormSetter", solveFormSetter = (path, value, createMissingKeys = false) => sn.solveFormSetter(path, value, createMissingKeys));
+            exports_5("solveFltSetter", solveFltSetter = (path, value, createMissingKeys = false) => sn.solveFltSetter(path, value, createMissingKeys));
+            exports_5("solveIntSetter", solveIntSetter = (path, value, createMissingKeys = false) => sn.solveIntSetter(path, value, createMissingKeys));
+            exports_5("solveStrSetter", solveStrSetter = (path, value, createMissingKeys = false) => sn.solveStrSetter(path, value, createMissingKeys));
+            exports_5("solveObjSetter", solveObjSetter = (path, value, createMissingKeys = false) => sn.solveObjSetter(path, value, createMissingKeys));
+            exports_5("solveFormSetter", solveFormSetter = (path, value, createMissingKeys = false) => sn.solveFormSetter(path, value, createMissingKeys));
             /** Associates(and replaces previous association) container object with a string key.
                 destroys association if object is zero
                 for ex. JDB.setObj("frostfall", frostFallInformation) will associate 'frostall' key and frostFallInformation so you can access it later */
-            exports_6("setObj", setObj = (key, object) => sn.setObj(key, object));
+            exports_5("setObj", setObj = (key, object) => sn.setObj(key, object));
             /** Returns true, if JDB capable resolve given @path, i.e. if it able to execute solve* or solver*Setter functions successfully */
-            exports_6("hasPath", hasPath = (path) => sn.hasPath(path));
+            exports_5("hasPath", hasPath = (path) => sn.hasPath(path));
             /** returns new array containing all JDB keys */
-            exports_6("allKeys", allKeys = () => sn.allKeys());
+            exports_5("allKeys", allKeys = () => sn.allKeys());
             /** returns new array containing all containers associated with JDB */
-            exports_6("allValues", allValues = () => sn.allValues());
+            exports_5("allValues", allValues = () => sn.allValues());
             /** writes storage data into JSON file at given path */
-            exports_6("writeToFile", writeToFile = (path) => sn.writeToFile(path));
+            exports_5("writeToFile", writeToFile = (path) => sn.writeToFile(path));
             /** Returns underlying JDB's container - an instance of JMap.
                 The object being owned (retained) internally, so you don't have to (but can) retain or release it. */
-            exports_6("root", root = () => sn.root());
+            exports_5("root", root = () => sn.root());
         }
     };
 });
@@ -566,10 +501,10 @@ to the folder where `skyrimPlatform.ts` is found, otherwise you'll get
 If you want to have this script in some other place, just change the
 relative path of each `import`.
 */
-System.register("Steam/steamapps/common/Skyrim Special Edition/Data/Platform/Modules/JContainers/JMap", ["Steam/steamapps/common/Skyrim Special Edition/Data/Platform/Modules/skyrimPlatform"], function (exports_7, context_7) {
+System.register("Steam/steamapps/common/Skyrim Special Edition/Data/Platform/Modules/JContainers/JFormMap", ["Steam/steamapps/common/Skyrim Special Edition/Data/Platform/Modules/skyrimPlatform"], function (exports_6, context_6) {
     "use strict";
     var sp, sn, object, getInt, getFlt, getStr, getObj, getForm, setInt, setFlt, setStr, setObj, setForm, hasKey, valueType, allKeys, allKeysPArray, allValues, removeKey, count, clear, addPairs, nextKey, getNthKey;
-    var __moduleName = context_7 && context_7.id;
+    var __moduleName = context_6 && context_6.id;
     return {
         setters: [
             function (sp_2) {
@@ -579,122 +514,39 @@ System.register("Steam/steamapps/common/Skyrim Special Edition/Data/Platform/Mod
         execute: function () {
             /** Associative key-value container.
                 Inherits JValue functionality */
-            sn = sp.JMap;
-            /** creates new container object. returns container's identifier (unique integer number). */
-            exports_7("object", object = () => sn.object());
-            /** Returns the value associated with the @key. If not, returns @default value */
-            exports_7("getInt", getInt = (object, key, defaultVal = 0) => sn.getInt(object, key, defaultVal));
-            exports_7("getFlt", getFlt = (object, key, defaultVal = 0.0) => sn.getFlt(object, key, defaultVal));
-            exports_7("getStr", getStr = (object, key, defaultVal = "") => sn.getStr(object, key, defaultVal));
-            exports_7("getObj", getObj = (object, key, defaultVal = 0) => sn.getObj(object, key, defaultVal));
-            exports_7("getForm", getForm = (object, key, defaultVal = null) => sn.getForm(object, key, defaultVal));
-            /** Inserts @key: @value pair. Replaces existing pair with the same @key */
-            exports_7("setInt", setInt = (object, key, value) => sn.setInt(object, key, value));
-            exports_7("setFlt", setFlt = (object, key, value) => sn.setFlt(object, key, value));
-            exports_7("setStr", setStr = (object, key, value) => sn.setStr(object, key, value));
-            exports_7("setObj", setObj = (object, key, container) => sn.setObj(object, key, container));
-            exports_7("setForm", setForm = (object, key, value) => sn.setForm(object, key, value));
-            /** Returns true, if the container has @key: value pair */
-            exports_7("hasKey", hasKey = (object, key) => sn.hasKey(object, key));
-            /** Returns type of the value associated with the @key.
-                0 - no value, 1 - none, 2 - int, 3 - float, 4 - form, 5 - object, 6 - string */
-            exports_7("valueType", valueType = (object, key) => sn.valueType(object, key));
-            /** Returns a new array containing all keys */
-            exports_7("allKeys", allKeys = (object) => sn.allKeys(object));
-            exports_7("allKeysPArray", allKeysPArray = (object) => sn.allKeysPArray(object));
-            /** Returns a new array containing all values */
-            exports_7("allValues", allValues = (object) => sn.allValues(object));
-            /** Removes the pair from the container where the key equals to the @key */
-            exports_7("removeKey", removeKey = (object, key) => sn.removeKey(object, key));
-            /** Returns count of pairs in the conainer */
-            exports_7("count", count = (object) => sn.count(object));
-            /** Removes all pairs from the container */
-            exports_7("clear", clear = (object) => sn.clear(object));
-            /** Inserts key-value pairs from the source container */
-            exports_7("addPairs", addPairs = (object, source, overrideDuplicates) => sn.addPairs(object, source, overrideDuplicates));
-            /** Simplifies iteration over container's contents.
-                Accepts the @previousKey, returns the next key.
-                If @previousKey == @endKey the function returns the first key.
-                The function always returns so-called 'valid' keys (the ones != @endKey).
-                The function returns @endKey ('invalid' key) only once to signal that iteration has reached its end.
-                In most cases, if the map doesn't contain an invalid key ("" for JMap, None form-key for JFormMap)
-                it's ok to omit the @endKey.
-                
-                Usage:
-                
-                    string key = JMap.nextKey(map, previousKey="", endKey="")
-                    while key != ""
-                      <retrieve values here>
-                      key = JMap.nextKey(map, key, endKey="")
-                    endwhile */
-            exports_7("nextKey", nextKey = (object, previousKey = "", endKey = "") => sn.nextKey(object, previousKey, endKey));
-            /** Retrieves N-th key. negative index accesses items from the end of container counting backwards.
-                Worst complexity is O(n/2) */
-            exports_7("getNthKey", getNthKey = (object, keyIndex) => sn.getNthKey(object, keyIndex));
-        }
-    };
-});
-/*
-This file was automatically generated by Papyrus-2-Typescript.exe
-https://github.com/CarlosLeyvaAyala/Papyrus-2-Typescript
-
-The program has no way to know the intention of the humans that made
-the scripts, so it's always advisable to manually check all generated
-files to make sure everything is declared as it should.
-
-Take note the program assumes this script exists in some subfolder
-to the folder where `skyrimPlatform.ts` is found, otherwise you'll get
-"Cannot find module..." type of errors.
-
-If you want to have this script in some other place, just change the
-relative path of each `import`.
-*/
-System.register("Steam/steamapps/common/Skyrim Special Edition/Data/Platform/Modules/JContainers/JFormMap", ["Steam/steamapps/common/Skyrim Special Edition/Data/Platform/Modules/skyrimPlatform"], function (exports_8, context_8) {
-    "use strict";
-    var sp, sn, object, getInt, getFlt, getStr, getObj, getForm, setInt, setFlt, setStr, setObj, setForm, hasKey, valueType, allKeys, allKeysPArray, allValues, removeKey, count, clear, addPairs, nextKey, getNthKey;
-    var __moduleName = context_8 && context_8.id;
-    return {
-        setters: [
-            function (sp_3) {
-                sp = sp_3;
-            }
-        ],
-        execute: function () {
-            /** Associative key-value container.
-                Inherits JValue functionality */
             sn = sp.JFormMap;
             /** creates new container object. returns container's identifier (unique integer number). */
-            exports_8("object", object = () => sn.object());
+            exports_6("object", object = () => sn.object());
             /** Returns the value associated with the @key. If not, returns @default value */
-            exports_8("getInt", getInt = (object, key, defaultVal = 0) => sn.getInt(object, key, defaultVal));
-            exports_8("getFlt", getFlt = (object, key, defaultVal = 0.0) => sn.getFlt(object, key, defaultVal));
-            exports_8("getStr", getStr = (object, key, defaultVal = "") => sn.getStr(object, key, defaultVal));
-            exports_8("getObj", getObj = (object, key, defaultVal = 0) => sn.getObj(object, key, defaultVal));
-            exports_8("getForm", getForm = (object, key, defaultVal = null) => sn.getForm(object, key, defaultVal));
+            exports_6("getInt", getInt = (object, key, defaultVal = 0) => sn.getInt(object, key, defaultVal));
+            exports_6("getFlt", getFlt = (object, key, defaultVal = 0.0) => sn.getFlt(object, key, defaultVal));
+            exports_6("getStr", getStr = (object, key, defaultVal = "") => sn.getStr(object, key, defaultVal));
+            exports_6("getObj", getObj = (object, key, defaultVal = 0) => sn.getObj(object, key, defaultVal));
+            exports_6("getForm", getForm = (object, key, defaultVal = null) => sn.getForm(object, key, defaultVal));
             /** Inserts @key: @value pair. Replaces existing pair with the same @key */
-            exports_8("setInt", setInt = (object, key, value) => sn.setInt(object, key, value));
-            exports_8("setFlt", setFlt = (object, key, value) => sn.setFlt(object, key, value));
-            exports_8("setStr", setStr = (object, key, value) => sn.setStr(object, key, value));
-            exports_8("setObj", setObj = (object, key, container) => sn.setObj(object, key, container));
-            exports_8("setForm", setForm = (object, key, value) => sn.setForm(object, key, value));
+            exports_6("setInt", setInt = (object, key, value) => sn.setInt(object, key, value));
+            exports_6("setFlt", setFlt = (object, key, value) => sn.setFlt(object, key, value));
+            exports_6("setStr", setStr = (object, key, value) => sn.setStr(object, key, value));
+            exports_6("setObj", setObj = (object, key, container) => sn.setObj(object, key, container));
+            exports_6("setForm", setForm = (object, key, value) => sn.setForm(object, key, value));
             /** Returns true, if the container has @key: value pair */
-            exports_8("hasKey", hasKey = (object, key) => sn.hasKey(object, key));
+            exports_6("hasKey", hasKey = (object, key) => sn.hasKey(object, key));
             /** Returns type of the value associated with the @key.
                 0 - no value, 1 - none, 2 - int, 3 - float, 4 - form, 5 - object, 6 - string */
-            exports_8("valueType", valueType = (object, key) => sn.valueType(object, key));
+            exports_6("valueType", valueType = (object, key) => sn.valueType(object, key));
             /** Returns a new array containing all keys */
-            exports_8("allKeys", allKeys = (object) => sn.allKeys(object));
-            exports_8("allKeysPArray", allKeysPArray = (object) => sn.allKeysPArray(object));
+            exports_6("allKeys", allKeys = (object) => sn.allKeys(object));
+            exports_6("allKeysPArray", allKeysPArray = (object) => sn.allKeysPArray(object));
             /** Returns a new array containing all values */
-            exports_8("allValues", allValues = (object) => sn.allValues(object));
+            exports_6("allValues", allValues = (object) => sn.allValues(object));
             /** Removes the pair from the container where the key equals to the @key */
-            exports_8("removeKey", removeKey = (object, key) => sn.removeKey(object, key));
+            exports_6("removeKey", removeKey = (object, key) => sn.removeKey(object, key));
             /** Returns count of pairs in the conainer */
-            exports_8("count", count = (object) => sn.count(object));
+            exports_6("count", count = (object) => sn.count(object));
             /** Removes all pairs from the container */
-            exports_8("clear", clear = (object) => sn.clear(object));
+            exports_6("clear", clear = (object) => sn.clear(object));
             /** Inserts key-value pairs from the source container */
-            exports_8("addPairs", addPairs = (object, source, overrideDuplicates) => sn.addPairs(object, source, overrideDuplicates));
+            exports_6("addPairs", addPairs = (object, source, overrideDuplicates) => sn.addPairs(object, source, overrideDuplicates));
             /** Simplifies iteration over container's contents.
                 Accepts the @previousKey, returns the next key.
                 If @previousKey == @endKey the function returns the first key.
@@ -710,25 +562,22 @@ System.register("Steam/steamapps/common/Skyrim Special Edition/Data/Platform/Mod
                       <retrieve values here>
                       key = JMap.nextKey(map, key, endKey="")
                     endwhile */
-            exports_8("nextKey", nextKey = (object, previousKey = null, endKey = null) => sn.nextKey(object, previousKey, endKey));
+            exports_6("nextKey", nextKey = (object, previousKey = null, endKey = null) => sn.nextKey(object, previousKey, endKey));
             /** Retrieves N-th key. negative index accesses items from the end of container counting backwards.
                 Worst complexity is O(n/2) */
-            exports_8("getNthKey", getNthKey = (object, keyIndex) => sn.getNthKey(object, keyIndex));
+            exports_6("getNthKey", getNthKey = (object, keyIndex) => sn.getNthKey(object, keyIndex));
         }
     };
 });
-System.register("Skyrim SE/MO2/mods/Easy Containers-src/Platform/easy-containers/src/entry", ["Steam/steamapps/common/Skyrim Special Edition/Data/Platform/Modules/DM-Lib/Debug", "Steam/steamapps/common/Skyrim Special Edition/Data/Platform/Modules/DM-Lib/Hotkeys", "Steam/steamapps/common/Skyrim Special Edition/Data/Platform/Modules/DM-Lib/Iteration", "Steam/steamapps/common/Skyrim Special Edition/Data/Platform/Modules/DM-Lib/Misc", "Steam/steamapps/common/Skyrim Special Edition/Data/Platform/Modules/JContainers/JDB", "Steam/steamapps/common/Skyrim Special Edition/Data/Platform/Modules/JContainers/JFormMap", "Steam/steamapps/common/Skyrim Special Edition/Data/Platform/Modules/skyrimPlatform"], function (exports_9, context_9) {
+System.register("Skyrim SE/MO2/mods/Easy Containers-src/Platform/easy-containers/src/entry", ["Steam/steamapps/common/Skyrim Special Edition/Data/Platform/Modules/DM-Lib/Debug", "Steam/steamapps/common/Skyrim Special Edition/Data/Platform/Modules/DM-Lib/Hotkeys", "Steam/steamapps/common/Skyrim Special Edition/Data/Platform/Modules/DM-Lib/Iteration", "Steam/steamapps/common/Skyrim Special Edition/Data/Platform/Modules/JContainers/JDB", "Steam/steamapps/common/Skyrim Special Edition/Data/Platform/Modules/JContainers/JFormMap", "Steam/steamapps/common/Skyrim Special Edition/Data/Platform/Modules/skyrimPlatform"], function (exports_7, context_7) {
     "use strict";
-    var D, Hotkey, Iteration_1, Misc_1, JDB, JFormMap, skyrimPlatform_4;
-    var __moduleName = context_9 && context_9.id;
+    var D, Hotkey, Iteration_1, JDB, JFormMap, skyrimPlatform_3;
+    var __moduleName = context_7 && context_7.id;
     function main() {
-        const modName = "Easy Containers";
+        /** Internal name */
         const mod_name = "easy-containers";
-        /** Current logging level. */
-        const currLogLvl = D.ReadLoggingFromSettings(mod_name, "loggingLevel");
-        skyrimPlatform_4.printConsole(currLogLvl);
         // Generates a logging function specific to this mod.
-        const CLF = (logAt) => D.CreateLoggingFunction(modName, currLogLvl, logAt);
+        const CLF = (logAt) => D.CreateLoggingFunction("Easy Containers", D.ReadLoggingFromSettings(mod_name, "loggingLevel"), logAt);
         /** Logs messages intended to detect bottlenecks. */
         const LogO = CLF(D.LoggingLevel.optimization);
         /** Logs an error message. */
@@ -750,51 +599,12 @@ System.register("Skyrim SE/MO2/mods/Easy Containers-src/Platform/easy-containers
         function SaveDbHandle(h) {
             JDB.solveObjSetter(basePath, h, true);
         }
-        const IntToHex = (x) => x.toString(16);
-        function GetFormEsp(frm) {
-            if (!frm)
-                return "";
-            const formId = LogVT("FormId", frm.getFormID(), IntToHex);
-            const modIndex = LogVT("modIndex", formId >>> 24, IntToHex);
-            const modForm = LogVT("modForm", formId & 0xffffff, IntToHex);
-            let name = "";
-            if (modIndex == 0xfe) {
-                const lightIndex = LogVT("Light mod index", (formId >>> 12) & 0xfff, IntToHex);
-                if (lightIndex < skyrimPlatform_4.Game.getLightModCount())
-                    name = skyrimPlatform_4.Game.getLightModName(lightIndex);
-                else
-                    return "";
-            }
-            else
-                name = skyrimPlatform_4.Game.getModName(modIndex);
-            // printConsole(name)
-            return name;
-            // UInt8 modIndex = form->formID >> 24;
-            // UInt32 modForm = form->formID & 0xFFFFFF;
-            // ModInfo* modInfo = nullptr;
-            // if (modIndex == 0xFE)
-            // {
-            //   UInt16 lightIndex = (form->formID >> 12) & 0xFFF;
-            //   if (lightIndex < (*g_dataHandler)->modList.loadedCCMods.count)
-            //     modInfo = (*g_dataHandler)->modList.loadedCCMods[lightIndex];
-            // }
-            // else
-            // {
-            //   modInfo = (*g_dataHandler)->modList.loadedMods[modIndex];
-            // }
-            // if (modInfo) {
-            //   sprintf_s(formName, "%s|%06X", modInfo->name, modForm);
-            // }
-            // return formName;
-        }
         /** Marks all items in some container. */
         function DoMarkItems() {
-            var _a;
-            const container = skyrimPlatform_4.Game.getCurrentCrosshairRef();
-            GetFormEsp(container ? container.getBaseObject() : (_a = skyrimPlatform_4.Game.getPlayer()) === null || _a === void 0 ? void 0 : _a.getBaseObject());
+            const container = skyrimPlatform_3.Game.getCurrentCrosshairRef();
             if (!container)
                 return;
-            skyrimPlatform_4.Debug.notification("Marking items in container.");
+            skyrimPlatform_3.Debug.notification("Marking items in container.");
             const a = LogVT("Mark. Database handle", GetDbHandle());
             Iteration_1.ForEachItemR(container, (item) => {
                 const name = item === null || item === void 0 ? void 0 : item.getName();
@@ -805,40 +615,35 @@ System.register("Skyrim SE/MO2/mods/Easy Containers-src/Platform/easy-containers
                 LogI(`${name} was added to database`);
             });
             SaveDbHandle(a);
-            skyrimPlatform_4.Debug.messageBox("All items were marked");
+            skyrimPlatform_3.Debug.messageBox("All items were marked");
         }
         /** Transfers all marked items in player inventory to the selected container in the crosshair.\
          * Equiped and favorited items are not transferred.
          */
         function DoTransferItems() {
-            const container = skyrimPlatform_4.Game.getCurrentCrosshairRef();
+            const container = skyrimPlatform_3.Game.getCurrentCrosshairRef();
             if (!container)
                 return;
-            skyrimPlatform_4.Debug.notification("Transferring items to container.");
-            const p = skyrimPlatform_4.Game.getPlayer();
+            skyrimPlatform_3.Debug.notification("Transferring items to container.");
+            const p = skyrimPlatform_3.Game.getPlayer();
             const a = LogVT("Transfer. Database handle", GetDbHandle());
             let n = 0;
             Iteration_1.ForEachItemR(p, (item) => {
                 if (!JFormMap.hasKey(a, item) ||
                     p.isEquipped(item) ||
                     p.getEquippedObject(0) === item ||
-                    skyrimPlatform_4.Game.isObjectFavorited(item))
+                    skyrimPlatform_3.Game.isObjectFavorited(item))
                     return;
-                p.removeItem(item, 999999, true, container); // Remove all items belonging to the marked type
+                p.removeItem(item, p.getItemCount(item), true, container); // Remove all items belonging to the marked type
                 n++;
             });
-            skyrimPlatform_4.Debug.messageBox(`${n} items were transferred`);
+            skyrimPlatform_3.Debug.messageBox(`${n} items were transferred`);
         }
-        skyrimPlatform_4.printConsole(skyrimPlatform_4.settings["easy-containers"]["hkMark1"]);
-        skyrimPlatform_4.printConsole(skyrimPlatform_4.settings["easy-containers"]["hkTransfer1"]);
-        const l = skyrimPlatform_4.settings["easy-containers"]["hkMark1"];
-        const l2 = typeof l === "number" ? l : 0;
         /** React when the player presses the "Mark" hotkey. */
-        // const MarkItems = Hotkey.ListenTo(l2)
-        const MarkItems = Hotkey.ListenTo(75);
+        const MarkItems = Hotkey.ListenTo(Hotkey.ReadFromSettings("easy-containers", "hkMark1"));
         /** React when the player presses the "Transfer" hotkey. */
-        const TransferItems = Hotkey.ListenTo(76);
-        skyrimPlatform_4.printConsole("Easy Containers successfully initialized.");
+        const TransferItems = Hotkey.ListenTo(Hotkey.ReadFromSettings("easy-containers", "hkTransfer1"));
+        skyrimPlatform_3.printConsole("Easy Containers successfully initialized.");
         /** This code is executed every single frame.
          * It runs fast because most of the time it will only be asking if a key is pressed.
          * It's only when a key is pressed when all code above gets fired for just one frame.
@@ -846,76 +651,12 @@ System.register("Skyrim SE/MO2/mods/Easy Containers-src/Platform/easy-containers
          * You can see how all of this is accomplished using `once()` if you check the code for
          * `Hotkey.ListenTo()`.
          */
-        skyrimPlatform_4.on("update", () => {
+        skyrimPlatform_3.on("update", () => {
             MarkItems(DoMarkItems);
             TransferItems(DoTransferItems);
         });
-        // ===========================================================
-        // Meh. Ignore all lines below.
-        // I was testing things for other mod and I don't want to lose those tests.
-        // I will eventually delete these lines.
-        // ===========================================================
-        let lastSlept = 0;
-        let goneToSleepAt = 0;
-        const Now = skyrimPlatform_4.Utility.getCurrentGameTime;
-        let OnSleepStart = () => {
-            goneToSleepAt = LogVT("OnSleepStart", Now());
-        };
-        let OnSleepEnd = () => {
-            if (Now() - lastSlept < 2) {
-                LogE("You just slept. Nothing will be done.");
-                lastSlept = LogVT("Awaken at", Now());
-                return;
-            }
-            const hoursSlept = LogVT("Time slept", Now() - goneToSleepAt);
-            if (hoursSlept < 1)
-                return; // Do nothing. Didn't really slept.
-            lastSlept = LogVT("Awaken at", Now());
-            //   const p = Game.getPlayer() as Actor
-            //   p.sendModEvent("Maxick_JourneyByAverage", "", 9000)
-        };
-        OnSleepStart = Misc_1.AvoidRapidFire(OnSleepStart);
-        OnSleepEnd = Misc_1.AvoidRapidFire(OnSleepEnd);
-        const SleepStart = Misc_1.ListenPapyrusEvent("OnSleepStart");
-        const SleepEnd = Misc_1.ListenPapyrusEvent("OnSleepStop");
-        const CellAttach = Misc_1.ListenPapyrusEvent("OnCellAttach");
-        skyrimPlatform_4.hooks.sendPapyrusEvent.add({
-            enter(ctx) {
-                SleepStart(ctx, OnSleepStart);
-                SleepEnd(ctx, OnSleepEnd);
-            },
-        });
-        // on("equip", (e) => {
-        //   const b = e.actor.getBaseObject()
-        //   // if (b) printConsole(`EQUIP. actor: ${b.getName()}. object: ${e.baseObj.getName()}`);
-        // });
-        skyrimPlatform_4.on("objectLoaded", (e) => {
-            var _a;
-            const a = (_a = skyrimPlatform_4.Actor.from(e.object)) === null || _a === void 0 ? void 0 : _a.getBaseObject();
-            const formId = LogVT("FormId", e.object.getFormID(), IntToHex);
-            skyrimPlatform_4.printConsole(`Name: ${a === null || a === void 0 ? void 0 : a.getName()}`);
-            // const l = Actor.from(Game.getFormEx(formId))?.getLeveledActorBase()
-            // printConsole(
-            //   `Leveled actor name ${l?.getName()} race: ${l
-            //     ?.getRace()
-            //     ?.getName()} class: ${l?.getClass()?.getName()}`
-            // )
-            // const base = Actor.from(e.object)?.getBaseObject()
-            // printConsole(`Base actor name ${base?.getName()}`)
-            // printConsole(`UNLOADED raw name ${e.object?.getName()}`)
-            // const b = Actor.from(e.object)?.getLeveledActorBase()
-            // if (b) {
-            // const r = ActorBase.from(b)?.getRace()
-            // const c = ActorBase.from(b)?.getClass()
-            // printConsole(`(UN)LOADED object: ${b.getName()}. loaded: ${e.isLoaded} class: ${c?.getName()} race: ${r?.getName()}`);
-            // }
-        });
-        // on("unequip", (e) => {
-        //   const b = e.actor.getBaseObject()
-        //   // if (b) printConsole(`UNEQUIP. actor: ${b.getName()}. object: ${e.baseObj.getName()}`);
-        // });
     }
-    exports_9("main", main);
+    exports_7("main", main);
     return {
         setters: [
             function (D_1) {
@@ -927,27 +668,24 @@ System.register("Skyrim SE/MO2/mods/Easy Containers-src/Platform/easy-containers
             function (Iteration_1_1) {
                 Iteration_1 = Iteration_1_1;
             },
-            function (Misc_1_1) {
-                Misc_1 = Misc_1_1;
-            },
             function (JDB_1) {
                 JDB = JDB_1;
             },
             function (JFormMap_1) {
                 JFormMap = JFormMap_1;
             },
-            function (skyrimPlatform_4_1) {
-                skyrimPlatform_4 = skyrimPlatform_4_1;
+            function (skyrimPlatform_3_1) {
+                skyrimPlatform_3 = skyrimPlatform_3_1;
             }
         ],
         execute: function () {
         }
     };
 });
-System.register("Skyrim SE/MO2/mods/Easy Containers-src/Platform/easy-containers/index", ["Skyrim SE/MO2/mods/Easy Containers-src/Platform/easy-containers/src/entry"], function (exports_10, context_10) {
+System.register("Skyrim SE/MO2/mods/Easy Containers-src/Platform/easy-containers/index", ["Skyrim SE/MO2/mods/Easy Containers-src/Platform/easy-containers/src/entry"], function (exports_8, context_8) {
     "use strict";
     var example;
-    var __moduleName = context_10 && context_10.id;
+    var __moduleName = context_8 && context_8.id;
     return {
         setters: [
             function (example_1) {
@@ -956,18 +694,6 @@ System.register("Skyrim SE/MO2/mods/Easy Containers-src/Platform/easy-containers
         ],
         execute: function () {
             example.main();
-        }
-    };
-});
-/* eslint-disable @typescript-eslint/adjacent-overload-signatures */
-/* eslint-disable @typescript-eslint/no-namespace */
-// Generated automatically. Do not edit.
-System.register("Skyrim SE/MO2/mods/Easy Containers-src/Platform/easy-containers/skyrimPlatform", [], function (exports_11, context_11) {
-    "use strict";
-    var __moduleName = context_11 && context_11.id;
-    return {
-        setters: [],
-        execute: function () {
         }
     };
 });
