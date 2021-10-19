@@ -1,14 +1,12 @@
+import { K } from "DM-Lib/Combinators"
 import * as D from "DM-Lib/Debug"
 import * as Hotkey from "DM-Lib/Hotkeys"
 import { ForEachItemR } from "DM-Lib/Iteration"
-import { K } from "DM-Lib/Combinators"
 import * as JDB from "JContainers/JDB"
 import * as JFormMap from "JContainers/JFormMap"
 import {
   Actor,
-  Container,
   Debug,
-  Furniture,
   Game,
   ObjectReference,
   on,

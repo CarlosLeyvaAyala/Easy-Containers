@@ -10,7 +10,7 @@
         "strictPropertyInitialization": true,
         "module": "System",
         "target": "ES2015",
-        "outFile": "../Plugins/easy-containers.js",
+        "outFile": "Platform/Plugins/easy-containers.js",
         "lib": [
             "ES2015"
         ],
@@ -18,7 +18,12 @@
             "chai": [
                 "./node_modules/@types/chai"
             ]
-        }
+        },
+        "baseUrl": "F:/Steam/steamapps/common/Skyrim Special Edition/Data/Platform/Modules",
+        "rootDirs": [
+            "F:/Steam/steamapps/common/Skyrim Special Edition/Data/Platform/Modules",
+            "F:/Skyrim SE/MO2/mods/Easy Containers-src"
+        ]
     },
     "include": [
         "./*.ts"
