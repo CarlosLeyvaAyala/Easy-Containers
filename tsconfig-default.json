@@ -10,7 +10,7 @@
         "strictPropertyInitialization": true,
         "module": "System",
         "target": "ES2015",
-        "outFile": "Platform/Plugins/easy-containers.js",
+        "outFile": "F:/Skyrim SE/MO2/overwrite/Platform/Plugins/easy-containers.js",
         "lib": [
             "ES2015"
         ],
