@@ -1,16 +1,18 @@
-import { K } from "DM-Lib/Combinators"
-import * as D from "DM-Lib/Debug"
-import * as Hotkey from "DM-Lib/Hotkeys"
-import { ForEachItemR } from "DM-Lib/Iteration"
+import { Combinators as C, DebugLib as D, FormLib, Hotkeys } from "DMLib"
 import * as JDB from "JContainers/JDB"
 import * as JFormMap from "JContainers/JFormMap"
 import {
   Actor,
+  Armor,
+  Container,
   Debug,
+  Form,
   Game,
   ObjectReference,
   on,
   printConsole,
+  Projectile,
+  Weapon,
 } from "skyrimPlatform"
 
 export function main() {
@@ -18,27 +20,33 @@ export function main() {
   const mod_name = "easy-containers"
 
   // Generates a logging function specific to this mod.
-  const CLF = (logAt: D.LoggingLevel) =>
-    D.CreateLoggingFunction(
+  const CLF = (logAt: D.Log.Level) =>
+    D.Log.CreateFunction(
+      D.Log.LevelFromSettings(mod_name, "loggingLevel"),
+      logAt,
       "Easy Containers",
-      D.ReadLoggingFromSettings(mod_name, "loggingLevel"),
-      logAt
+      undefined,
+      D.Log.FileFmt
     )
 
   /** Logs messages intended to detect bottlenecks. */
-  const LogO = CLF(D.LoggingLevel.optimization)
+  const LogO = CLF(D.Log.Level.optimization)
 
   /** Logs an error message. */
-  const LogE = CLF(D.LoggingLevel.error)
+  const LogE = CLF(D.Log.Level.error)
 
   /** Logs detailed info meant for players to see. */
-  const LogI = CLF(D.LoggingLevel.info)
+  const LogI = CLF(D.Log.Level.info)
 
   /** Logs detailed info meant only for debugging. */
-  const LogV = CLF(D.LoggingLevel.verbose)
+  const LogV = CLF(D.Log.Level.verbose)
 
   /** Logs a variable while initializing it. Message level: verbose. */
-  const LogVT = D.TapLog(LogV)
+  const LogVT = D.Log.Tap(LogV)
+
+  const LogHK = D.Log.Tap((msg: any) => {
+    printConsole(`Easy Containers hotkey-${msg}`)
+  })
 
   /** Where the marked items database is located. */
   const basePath = ".EasyContainers.items"
@@ -54,8 +62,7 @@ export function main() {
     JDB.solveObjSetter(basePath, h, true)
   }
 
-  /**
-   * General item management function.
+  /** General item management function.
    *
    * @remarks
    * This function:
@@ -106,7 +113,7 @@ export function main() {
       (c, h) => {
         let n = 0
         let i = 0
-        ForEachItemR(c, (item) => {
+        FormLib.ForEachItemR(c, (item) => {
           const name = item?.getName()
           const exists = LogVT(
             `Trying to add ${name} to database. Already added?`,
@@ -123,45 +130,67 @@ export function main() {
         SaveDbHandle(h)
         return `${n} items were marked (${i} new)`
       },
-      K("Select a valid container")
+      C.K("Select a valid container")
     )
   }
+
+  type InvalidItemFunc = (
+    item: Form | null,
+    dbHandle: number,
+    container: ObjectReference
+  ) => boolean
 
   /** Transfers all marked items in player inventory to the selected container in the crosshair.\
    * Equiped and favorited items are not transferred.
    */
-  function DoTransferItems() {
-    ManageItems(
-      "Transferring items to container.",
-      (c, h) => {
-        const p = Game.getPlayer() as Actor
-        let n = 0
-        ForEachItemR(p, (item) => {
-          if (
-            !JFormMap.hasKey(h, item) ||
-            p.isEquipped(item) ||
-            p.getEquippedObject(0) === item ||
-            Game.isObjectFavorited(item)
-          )
-            return
+  function DoTransferItems(IsInvalid: InvalidItemFunc) {
+    return () =>
+      ManageItems(
+        "Transferring items to container.",
+        (c, h) => {
+          const p = Game.getPlayer() as Actor
+          let n = 0
+          FormLib.ForEachItemR(p, (item) => {
+            if (
+              IsInvalid(item, h, c) ||
+              p.isEquipped(item) ||
+              p.getEquippedObject(0) === item ||
+              Game.isObjectFavorited(item)
+            )
+              return
 
-          p.removeItem(item, p.getItemCount(item), true, c) // Remove all items belonging to the marked type
-          n++
-        })
-        return `${n} items were transferred`
-      },
-      K("Select a valid container")
-    )
+            p.removeItem(item, p.getItemCount(item), true, c) // Remove all items belonging to the marked type
+            n++
+          })
+          return `${n} items were transferred`
+        },
+        C.K("Select a valid container")
+      )
   }
 
-  /** React when the player presses the "Mark" hotkey. */
-  const MarkItems = Hotkey.ListenTo(
-    Hotkey.ReadFromSettings("easy-containers", "hkMark1")
+  const Read = Hotkeys.FromSettings
+  const hkMark1 = LogHK("mark1", Read(mod_name, "hkMark1"))
+  const hkTransfer1 = LogHK("transfer1", Read(mod_name, "hkTransfer1"))
+  const hkTrUWeapArmr = LogHK(
+    "unmarked weap/armors",
+    Read(mod_name, "hkTrUWeapArmr")
   )
 
+  /** React when the player presses the "Mark" hotkey. */
+  const OnMark1 = Hotkeys.ListenTo(hkMark1)
+
   /** React when the player presses the "Transfer" hotkey. */
-  const TransferItems = Hotkey.ListenTo(
-    Hotkey.ReadFromSettings("easy-containers", "hkTransfer1")
+  const OnTransfer1 = Hotkeys.ListenTo(hkTransfer1)
+
+  /** React when the player presses the "Transfer" hotkey. */
+  const OnTrUWA = Hotkeys.ListenTo(hkTrUWeapArmr)
+
+  /** Transfer only marked items. */
+  const DoTransfer1 = DoTransferItems((i, h) => !JFormMap.hasKey(h, i))
+
+  /** Ttransfer unmarked weapons and armors. */
+  const DoTrUWA = DoTransferItems(
+    (i) => !(Armor.from(i) || Weapon.from(i) || Projectile.from(i))
   )
 
   printConsole("Easy Containers successfully initialized.")
@@ -174,7 +203,8 @@ export function main() {
    * `Hotkey.ListenTo()`.
    */
   on("update", () => {
-    MarkItems(DoMarkItems)
-    TransferItems(DoTransferItems)
+    OnMark1(DoMarkItems)
+    OnTransfer1(DoTransfer1)
+    OnTrUWA(DoTrUWA)
   })
 }

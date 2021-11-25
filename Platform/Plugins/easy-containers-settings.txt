@@ -1,5 +1,0 @@
-{
-  "loggingLevel": "none",
-  "hkMark1": 79,
-  "hkTransfer1": 80
-}

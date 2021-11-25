@@ -143,8 +143,12 @@
 					"column": 0
 				},
 				{
-					"line": 125,
-					"column": 7
+					"line": 110,
+					"column": 17
+				},
+				{
+					"line": 46,
+					"column": 40
 				},
 				{
 					"line": -1,
@@ -175,11 +179,7 @@
 					"column": 0
 				},
 				{
-					"line": -1,
-					"column": 0
-				},
-				{
-					"line": 105,
+					"line": 104,
 					"column": 0
 				}
 			]
@@ -243,6 +243,51 @@
 				{
 					"line": 63,
 					"column": 0
+				},
+				{
+					"line": -1,
+					"column": 0
+				},
+				{
+					"line": -1,
+					"column": 0
+				},
+				{
+					"line": -1,
+					"column": 0
+				},
+				{
+					"line": -1,
+					"column": 0
+				},
+				{
+					"line": -1,
+					"column": 0
+				},
+				{
+					"line": -1,
+					"column": 0
+				},
+				{
+					"line": -1,
+					"column": 0
+				}
+			]
+		},
+		{
+			"path": "../../../../Steam/steamapps/common/Skyrim Special Edition/Data/Platform/Modules/DMLib.ts",
+			"bookmarks": [
+				{
+					"line": -1,
+					"column": 0
+				},
+				{
+					"line": 709,
+					"column": 33
+				},
+				{
+					"line": 824,
+					"column": 29
 				},
 				{
 					"line": -1,

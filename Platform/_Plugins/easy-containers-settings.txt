@@ -1,0 +1,6 @@
+{
+  "loggingLevel": "none",
+  "hkMark1": "Num1",
+  "hkTransfer1": "Num2",
+  "hkTrUWeapArmr": "Num3"
+}
