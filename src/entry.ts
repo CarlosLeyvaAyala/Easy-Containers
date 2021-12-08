@@ -1,3 +1,20 @@
+import {
+  ActorArg,
+  AddChangeRel,
+  ArmorArg,
+  ChangeType,
+  ClearChangeRel,
+  defaultType,
+  EquippedData,
+  GetAllModest,
+  GetAllSkimpy,
+  GetModest,
+  GetModestData,
+  GetSkimpy,
+  GetSkimpyData,
+  IsRegistered,
+  SkimpyData,
+} from "skimpify-api"
 import { Combinators as C, DebugLib as D, FormLib, Hotkeys } from "DMLib"
 import * as JDB from "JContainers/JDB"
 import * as JFormMap from "JContainers/JFormMap"
@@ -168,13 +185,18 @@ export function main() {
       )
   }
 
+  const H = (hk: number) => Hotkeys.DxScanCode[hk]
+
   const Read = Hotkeys.FromSettings
-  const hkMark1 = LogHK("mark1", Read(mod_name, "hkMark1"))
-  const hkTransfer1 = LogHK("transfer1", Read(mod_name, "hkTransfer1"))
+  const hkMark1 = LogHK("mark1", Read(mod_name, "hkMark1"), H)
+  const hkTransfer1 = LogHK("transfer1", Read(mod_name, "hkTransfer1"), H)
   const hkTrUWeapArmr = LogHK(
     "unmarked weap/armors",
-    Read(mod_name, "hkTrUWeapArmr")
+    Read(mod_name, "hkTrUWeapArmr"),
+    H
   )
+  const hkSkimpyU = LogHK("Unregistered Skimpy", Read(mod_name, "hkSkimpyU"), H)
+  const hkSkimpyR = LogHK("Registered Skimpy", Read(mod_name, "hkSkimpyR"), H)
 
   /** React when the player presses the "Mark" hotkey. */
   const OnMark1 = Hotkeys.ListenTo(hkMark1)
@@ -185,13 +207,29 @@ export function main() {
   /** React when the player presses the "Transfer" hotkey. */
   const OnTrUWA = Hotkeys.ListenTo(hkTrUWeapArmr)
 
+  /** React when the player presses the "Transfer unregistered skimpy" hotkey. */
+  const OnSkimpyU = Hotkeys.ListenTo(hkSkimpyU)
+
+  /** React when the player presses the "Transfer registered skimpy" hotkey. */
+  const OnSkimpyR = Hotkeys.ListenTo(hkSkimpyR)
+
   /** Transfer only marked items. */
   const DoTransfer1 = DoTransferItems((i, h) => !JFormMap.hasKey(h, i))
 
-  /** Ttransfer unmarked weapons and armors. */
+  /** Transfer unmarked weapons and armors. */
   const DoTrUWA = DoTransferItems(
     (i) => !(Armor.from(i) || Weapon.from(i) || Projectile.from(i))
   )
+
+  function TranferSkimpy(f: (a: ArmorArg) => boolean) {
+    return (i: Form | null) => {
+      const aa = Armor.from(i)
+      return !aa ? false : f(aa)
+    }
+  }
+
+  const DoTrSkimpyR = DoTransferItems(TranferSkimpy((a) => !IsRegistered(a)))
+  const DoTrSkimpyU = DoTransferItems(TranferSkimpy(IsRegistered))
 
   printConsole("Easy Containers successfully initialized.")
 
@@ -206,5 +244,8 @@ export function main() {
     OnMark1(DoMarkItems)
     OnTransfer1(DoTransfer1)
     OnTrUWA(DoTrUWA)
+
+    OnSkimpyR(DoTrSkimpyR)
+    OnSkimpyU(DoTrSkimpyU)
   })
 }
