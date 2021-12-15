@@ -1,30 +1,21 @@
 import {
-  ActorArg,
-  AddChangeRel,
-  ArmorArg,
-  ChangeType,
-  ClearChangeRel,
-  defaultType,
-  EquippedData,
-  GetAllModest,
-  GetAllSkimpy,
-  GetModest,
-  GetModestData,
-  GetSkimpy,
-  GetSkimpyData,
-  IsRegistered,
-  SkimpyData,
-} from "skimpify-api"
-import { Combinators as C, DebugLib as D, FormLib, Hotkeys } from "DMLib"
+  Combinators as C,
+  DebugLib as D,
+  DebugLib,
+  FormLib,
+  Hotkeys,
+} from "DMLib"
 import * as JDB from "JContainers/JDB"
 import * as JFormMap from "JContainers/JFormMap"
+import { ArmorArg, DbHandle, IsRegistered } from "skimpify-api"
 import {
   Actor,
   Armor,
-  Container,
   Debug,
+  DxScanCode,
   Form,
   Game,
+  Input,
   ObjectReference,
   on,
   printConsole,
@@ -64,20 +55,6 @@ export function main() {
   const LogHK = D.Log.Tap((msg: any) => {
     printConsole(`Easy Containers hotkey-${msg}`)
   })
-
-  /** Where the marked items database is located. */
-  const basePath = ".EasyContainers.items"
-
-  /** Gets a memory database handle to a JContainers object, creating it if it doesn't exist. */
-  function GetDbHandle(): number {
-    const r = JDB.solveObj(basePath)
-    return r !== 0 ? r : JFormMap.object()
-  }
-
-  /** Saves a JContainers object handle to the memory database. */
-  function SaveDbHandle(h: number) {
-    JDB.solveObjSetter(basePath, h, true)
-  }
 
   /** General item management function.
    *
@@ -168,13 +145,7 @@ export function main() {
           const p = Game.getPlayer() as Actor
           let n = 0
           FormLib.ForEachItemR(p, (item) => {
-            if (
-              IsInvalid(item, h, c) ||
-              p.isEquipped(item) ||
-              p.getEquippedObject(0) === item ||
-              Game.isObjectFavorited(item)
-            )
-              return
+            if (IsInvalid(item, h, c) || IsEquipOrFav(item, p)) return
 
             p.removeItem(item, p.getItemCount(item), true, c) // Remove all items belonging to the marked type
             n++
@@ -214,7 +185,8 @@ export function main() {
   const OnSkimpyR = Hotkeys.ListenTo(hkSkimpyR)
 
   /** Transfer only marked items. */
-  const DoTransfer1 = DoTransferItems((i, h) => !JFormMap.hasKey(h, i))
+  const DoTransfer1 = DoTransferItems(IsNotDbRegistered)
+  // (i: Form | null, h: number) => !JFormMap.hasKey(h, i)
 
   /** Transfer unmarked weapons and armors. */
   const DoTrUWA = DoTransferItems(
@@ -241,11 +213,52 @@ export function main() {
    * `Hotkey.ListenTo()`.
    */
   on("update", () => {
+    if (
+      Input.isKeyPressed(DxScanCode.LeftControl) ||
+      Input.isKeyPressed(DxScanCode.RightControl)
+    )
+      OnTransfer1(DoSell)
+    else OnTransfer1(DoTransfer1)
     OnMark1(DoMarkItems)
-    OnTransfer1(DoTransfer1)
     OnTrUWA(DoTrUWA)
 
     OnSkimpyR(DoTrSkimpyR)
     OnSkimpyU(DoTrSkimpyU)
   })
+}
+
+/** Where the marked items database is located. */
+const basePath = ".EasyContainers.items"
+
+/** Gets a memory database handle to a JContainers object, creating it if it doesn't exist. */
+function GetDbHandle(): number {
+  const r = JDB.solveObj(basePath)
+  return r !== 0 ? r : JFormMap.object()
+}
+
+/** Saves a JContainers object handle to the memory database. */
+function SaveDbHandle(h: number) {
+  JDB.solveObjSetter(basePath, h, true)
+}
+
+const IsNotDbRegistered = (i: Form | null, h: number) => !JFormMap.hasKey(h, i)
+
+const IsEquipOrFav = (i: Form | null, a: Actor) =>
+  a.isEquipped(i) || a.getEquippedObject(0) === i || Game.isObjectFavorited(i)
+
+function DoSell() {
+  const p = Game.getPlayer() as Actor
+  const h = GetDbHandle()
+  let gold = 0
+  let n = 0
+  FormLib.ForEachItemR(p, (i) => {
+    if (!i || IsNotDbRegistered(i, h) || IsEquipOrFav(i, p)) return
+    const q = p.getItemCount(i)
+    gold += i.getGoldValue() * q
+    p.removeItem(i, q, true, null)
+    n++
+  })
+
+  p.addItem(Game.getFormEx(0xf), gold, true)
+  Debug.messageBox(`${n} items were sold for ${gold}`)
 }
