@@ -143,12 +143,8 @@
 					"column": 0
 				},
 				{
-					"line": 253,
-					"column": 23
-				},
-				{
-					"line": 147,
-					"column": 11
+					"line": 36,
+					"column": 57
 				},
 				{
 					"line": -1,
@@ -179,7 +175,11 @@
 					"column": 0
 				},
 				{
-					"line": 108,
+					"line": -1,
+					"column": 0
+				},
+				{
+					"line": -1,
 					"column": 0
 				}
 			]
@@ -282,12 +282,57 @@
 					"column": 0
 				},
 				{
-					"line": 709,
-					"column": 33
+					"line": 422,
+					"column": 53
 				},
 				{
-					"line": 824,
-					"column": 29
+					"line": 1086,
+					"column": 45
+				},
+				{
+					"line": -1,
+					"column": 0
+				},
+				{
+					"line": -1,
+					"column": 0
+				},
+				{
+					"line": -1,
+					"column": 0
+				},
+				{
+					"line": -1,
+					"column": 0
+				},
+				{
+					"line": -1,
+					"column": 0
+				},
+				{
+					"line": -1,
+					"column": 0
+				},
+				{
+					"line": -1,
+					"column": 0
+				}
+			]
+		},
+		{
+			"path": "../../../../../C:/Users/Osrail/Documents/GitHub/DM-Lib-Typescript/Hotkeys.md",
+			"bookmarks": [
+				{
+					"line": -1,
+					"column": 0
+				},
+				{
+					"line": -1,
+					"column": 0
+				},
+				{
+					"line": 203,
+					"column": 21
 				},
 				{
 					"line": -1,
@@ -315,6 +360,14 @@
 				},
 				{
 					"line": -1,
+					"column": 0
+				},
+				{
+					"line": -1,
+					"column": 0
+				},
+				{
+					"line": 102,
 					"column": 0
 				}
 			]
