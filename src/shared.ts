@@ -6,12 +6,14 @@ const mod_name = "easy-containers"
 const d = D.Log.CreateAll(
   modNameDisplay,
   D.Log.LevelFromSettings(mod_name, "loggingLevel"),
-  undefined,
+  D.Log.ConsoleFmt,
   D.Log.FileFmt
 )
 
 /** Log **ALL** messages. */
 export const LA = d.None
+/** Log error. */
+export const LE = d.Error
 /** Log info. */
 export const LI = d.Info
 /** Log verbose. */
@@ -29,3 +31,4 @@ export const GetHotkey = (k: string) =>
 
 //@ts-ignore
 export const inverseHk = settings[mod_name]["hotkeys"]["inverse"] as string
+export const sellMult = settings[mod_name]["sellingMultiplier"] as number

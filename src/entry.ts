@@ -1,52 +1,71 @@
-import { Combinators as C, Hotkeys as H } from "DMLib"
+import { Combinators as C, DebugLib as D, Hotkeys as H, Hotkeys } from "DMLib"
 import {
   DoMarkItems,
   DoSell,
+  DoTransfer,
   DoTransferAll,
+  DoTransferArmor,
+  DoTransferArmorAll,
+  DoTransferArmorI,
+  DoTransferI,
   DoTransferWeapons,
+  DoTransferWeaponsAll,
+  DoTransferWeaponsI,
   DoTrSkimpy,
+  DoTrSkimpyI,
 } from "items"
-import { GetHotkey, inverseHk, LA, modNameDisplay } from "shared"
-import { Debug, on, once } from "skyrimPlatform"
+import { GetHotkey, inverseHk, LA, LE, modNameDisplay } from "shared"
+import { Debug, on, once, printConsole } from "skyrimPlatform"
 
+let invalidInverse = false
 export function main() {
-  let invalidInverse = false
-  const MarkInvalidInv = () => {
-    invalidInverse = true
-  }
-  const Inverse =
-    inverseHk === "Alt"
-      ? H.IsAltPressed
-      : inverseHk === "Ctrl"
-      ? H.IsCtrlPressed
-      : inverseHk === "Shift"
-      ? H.IsShiftPressed
-      : C.Return(MarkInvalidInv(), H.IsShiftPressed)
+  // const Inverse =
+  //   inverseHk === "Alt"
+  //     ? H.IsAltPressed
+  //     : inverseHk === "Ctrl"
+  //     ? H.IsCtrlPressed
+  //     : inverseHk === "Shift"
+  //     ? H.IsShiftPressed
+  //     : C.Return(MarkInvalidInv(), H.IsShiftPressed)
 
-  const hkMarkAll = GetHotkey("markAll")
-  const hkTransferAll = GetHotkey("transferAll")
-  const hkTransferWeapon = GetHotkey("transferWeapon")
-  const hkTransferSkimpy = GetHotkey("transferSkimpy")
-  const hkSell = GetHotkey("sell")
+  /** Listen to some hotkey by its name in the settings file */
+  const L = (k: string) => H.ListenTo(GetHotkey(k))
+  const LI = (k: string) => H.ListenTo(Inv(GetHotkey(k)))
 
-  const OnMarkAll = H.ListenTo(hkMarkAll)
-  const OnTransferAll = H.ListenTo(hkTransferAll)
-  const OnTransferWeapon = H.ListenTo(hkTransferWeapon)
-  const OnTransferSkimpy = H.ListenTo(hkTransferSkimpy)
-  const OnSell = H.ListenTo(hkSell)
+  const OnMark = L("mark")
+  const OnTransfer = L("transfer")
+  const OnTransferI = LI("transfer")
+  const OnTransferWeapon = L("weapon")
+  const OnTransferWeaponI = LI("weapon")
+  const OnTransferArmor = L("armor")
+  const OnTransferArmorI = LI("armor")
+  const OnTransferSkimpy = L("skimpy")
+  const OnTransferSkimpyI = LI("skimpy")
+
+  const OnTransferAll = L("transferAll")
+  const OnTransferAllWeapons = L("allWeapons")
+  const OnTransferAllArmors = L("allArmors")
+
+  const OnSell = L("sell")
 
   LA("Initialization success.")
 
   on("update", () => {
     OnSell(DoSell)
+    OnTransferAll(DoTransferAll)
+    OnTransferAllWeapons(DoTransferWeaponsAll)
+    OnTransferAllArmors(DoTransferArmorAll)
 
-    if (Inverse()) {
-    } else {
-      OnTransferAll(DoTransferAll)
-      OnMarkAll(DoMarkItems)
-      OnTransferWeapon(DoTransferWeapons)
-      OnTransferSkimpy(DoTrSkimpy)
-    }
+    OnMark(DoMarkItems)
+    OnTransfer(DoTransfer)
+    OnTransferI(DoTransferI)
+    OnTransferWeapon(DoTransferWeapons)
+    OnTransferWeaponI(DoTransferWeaponsI)
+    OnTransferArmor(DoTransferArmor)
+    OnTransferArmorI(DoTransferArmorI)
+
+    OnTransferSkimpy(DoTrSkimpy)
+    OnTransferSkimpyI(DoTrSkimpyI)
   })
 
   once("update", () => {
@@ -55,4 +74,24 @@ export function main() {
       `${modNameDisplay}:\nThe hotkey for inverting operations found in your settings file is invalid.\nReverting to default: Shift.`
     )
   })
+}
+
+const MarkInvalidInv = () => {
+  invalidInverse = true
+}
+
+function Inv(h: Hotkeys.Hotkey): Hotkeys.Hotkey {
+  const E = () =>
+    LE(
+      `***ERROR*** Hotkey ${H.ToString(h)} already contains the inverse hotkey.`
+    )
+  const A = (v: boolean | undefined) => (v ? D.Log.R(E(), true) : true)
+  let m = h.modifiers ? h.modifiers : {}
+
+  if (inverseHk === "Alt") m.alt = A(m.alt)
+  else if (inverseHk === "Ctrl") m.ctrl = A(m.ctrl)
+  else if (inverseHk === "Shift") m.shift = A(m.shift)
+  else m.shift = C.Return(MarkInvalidInv(), true) // Default to shift and inform to player
+
+  return { hk: h.hk, modifiers: m }
 }

@@ -1,18 +1,18 @@
-import { ArmorArg, IsNotRegistered, IsRegistered } from "skimpify-api"
 import { Combinators as C, FormLib } from "DMLib"
 import * as JDB from "JContainers/JDB"
 import * as JFormMap from "JContainers/JFormMap"
+import { ArmorArg, IsNotRegistered, IsRegistered } from "skimpify-api"
 import {
   Actor,
+  Ammo,
   Armor,
   Debug,
   Form,
   Game,
   ObjectReference,
-  Projectile,
   Weapon,
 } from "skyrimPlatform"
-import { LI, LV, LVT } from "./shared"
+import { LI, LV, LVT, sellMult } from "./shared"
 
 /** General item management function.
  *
@@ -72,27 +72,16 @@ function SaveDbHandle(h: number) {
   JDB.solveObjSetter(basePath, h, true)
 }
 
-const IsNotDbRegistered = (i: Form | null, h: number) => !JFormMap.hasKey(h, i)
+type DbHandle = number
+type FormNull = Form | null
 
-const IsEquipOrFav = (i: Form | null, a: Actor) =>
+/** Is the item registered in the database? */
+const IsDbRegistered = (i: FormNull, h: DbHandle) => JFormMap.hasKey(h, i)
+/** Is the item not registered in the database? */
+const IsNotDbRegistered = (i: FormNull, h: DbHandle) => !IsDbRegistered(i, h)
+
+const IsEquipOrFav = (i: FormNull, a: Actor) =>
   a.isEquipped(i) || a.getEquippedObject(0) === i || Game.isObjectFavorited(i)
-
-export function DoSell() {
-  const p = Game.getPlayer() as Actor
-  const h = GetDbHandle()
-  let gold = 0
-  let n = 0
-  FormLib.ForEachItemR(p, (i) => {
-    if (!i || IsNotDbRegistered(i, h) || IsEquipOrFav(i, p)) return
-    const q = p.getItemCount(i)
-    gold += i.getGoldValue() * q
-    p.removeItem(i, q, true, null)
-    n++
-  })
-
-  p.addItem(Game.getFormEx(0xf), gold, true)
-  Debug.messageBox(`${n} items were sold for ${gold}`)
-}
 
 /** Marks all items in some container. */
 export function DoMarkItems() {
@@ -116,25 +105,25 @@ export function DoMarkItems() {
       })
 
       SaveDbHandle(h)
-      return `${n} items were marked (${i} new)`
+      return `${n} types of items were marked (${i} new)`
     },
     C.K("Select a valid container")
   )
 }
 
 type InvalidItemFunc = (
-  item: Form | null,
-  dbHandle: number,
-  container: ObjectReference
+  item: FormNull,
+  dbHandle: DbHandle,
+  container: ObjectReference | null
 ) => boolean
 
 /** Transfers all marked items in player inventory to the selected container in the crosshair.\
  * Equiped and favorited items are not transferred.
  */
-function DoTransferItems(IsInvalid: InvalidItemFunc) {
+function DoTransferItems(IsInvalid: InvalidItemFunc, msg: string = "items") {
   return () =>
     ManageItems(
-      "Transferring items to container.",
+      `Transferring ${msg} to container.`,
       (c, h) => {
         const p = Game.getPlayer() as Actor
         let n = 0
@@ -144,25 +133,99 @@ function DoTransferItems(IsInvalid: InvalidItemFunc) {
           p.removeItem(item, p.getItemCount(item), true, c) // Remove all items belonging to the marked type
           n++
         })
-        return `${n} items were transferred`
+        return `${n} types of items were transferred`
       },
       C.K("Select a valid container")
     )
 }
 
+/** Transfers all non equipped/favorited items. */
+export const DoTransferAll = DoTransferItems((_) => false, "ALL items")
 /** Transfer only marked items. */
-export const DoTransferAll = DoTransferItems(IsNotDbRegistered)
+export const DoTransfer = DoTransferItems(IsNotDbRegistered, "marked items")
+/** Transfer only unmarked items. */
+export const DoTransferI = DoTransferItems(IsDbRegistered, "unmarked items")
 
-/** Transfer unmarked weapons and armors. */
-export const DoTransferWeapons = DoTransferItems(
-  (i) => !(Armor.from(i) || Weapon.from(i) || Projectile.from(i))
-)
+// ;>========================================================
+// ;>===                  BY CATEGORY                   ===<;
+// ;>========================================================
+
+type CategoryFunc = (i: FormNull) => boolean
+
+/** Tell if an item belongs to some category and is registered in database */
+function MarkedByCat(cat: CategoryFunc): InvalidItemFunc {
+  return (i: FormNull, h: DbHandle) => {
+    if (!cat(i)) return true
+    return IsNotDbRegistered(i, h)
+  }
+}
+
+function UnmarkedByCat(cat: CategoryFunc): InvalidItemFunc {
+  return (i: FormNull, h: DbHandle) => {
+    if (!cat(i)) return true
+    return IsDbRegistered(i, h)
+  }
+}
+
+/** Transfers items that belong to some category and are registered in database */
+const ByCat = (cat: CategoryFunc, msg: string) =>
+  DoTransferItems(MarkedByCat(cat), `marked ${msg}`)
+/** Transfers items that belong to some category and are NOT registered in database */
+const ByCatI = (cat: CategoryFunc, msg: string) =>
+  DoTransferItems(UnmarkedByCat(cat), `unmarked ${msg}`)
+/** Transfers items that belong to some category */
+const ByCatAll = (cat: CategoryFunc, msg: string) =>
+  DoTransferItems((i: FormNull) => !cat(i), `all ${msg}`)
+
+const IsWeapon: CategoryFunc = (i: FormNull) =>
+  (Weapon.from(i) || Ammo.from(i)) !== null
+const IsArmor: CategoryFunc = (i: FormNull) => Armor.from(i) !== null
+
+/** Transfer marked weapons. */
+export const DoTransferWeapons = ByCat(IsWeapon, "weapons")
+/** Transfer unmarked weapons. */
+export const DoTransferWeaponsI = ByCatI(IsWeapon, "weapons")
+/** Transfer all weapons. */
+export const DoTransferWeaponsAll = ByCatAll(IsWeapon, "weapons")
+
+/** Transfer marked armors. */
+export const DoTransferArmor = ByCat(IsArmor, "armors")
+/** Transfer unmarked armors. */
+export const DoTransferArmorI = ByCatI(IsArmor, "armors")
+/** Transfer all armors. */
+export const DoTransferArmorAll = ByCatAll(IsArmor, "armors")
+
+// ;>========================================================
+// ;>===                    SPECIAL                     ===<;
+// ;>========================================================
+
+/** Checks if an armor is related to the Skimpify Framework */
 function TranferSkimpy(f: (a: ArmorArg) => boolean) {
-  return (i: Form | null) => {
+  return (i: FormNull) => {
     const aa = Armor.from(i)
     return !aa ? false : f(aa)
   }
 }
 
+/** Transfer armors registered in the Skimpify Framework. */
 export const DoTrSkimpy = DoTransferItems(TranferSkimpy(IsNotRegistered))
+/** Transfer armors NOT registered in the Skimpify Framework. */
 export const DoTrSkimpyI = DoTransferItems(TranferSkimpy(IsRegistered))
+
+/** Sell all marked items */
+export function DoSell() {
+  const p = Game.getPlayer() as Actor
+  const h = GetDbHandle()
+  let gold = 0
+  let n = 0
+  FormLib.ForEachItemR(p, (i) => {
+    if (!i || IsNotDbRegistered(i, h) || IsEquipOrFav(i, p)) return
+    const q = p.getItemCount(i)
+    gold += i.getGoldValue() * q * sellMult
+    p.removeItem(i, q, true, null)
+    n += q
+  })
+
+  p.addItem(Game.getFormEx(0xf), gold, true)
+  Debug.messageBox(`${n} items were sold for ${gold}`)
+}

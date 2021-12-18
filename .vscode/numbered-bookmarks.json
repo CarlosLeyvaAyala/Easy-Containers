@@ -143,8 +143,8 @@
 					"column": 0
 				},
 				{
-					"line": 36,
-					"column": 57
+					"line": 66,
+					"column": 20
 				},
 				{
 					"line": -1,
@@ -180,6 +180,10 @@
 				},
 				{
 					"line": -1,
+					"column": 0
+				},
+				{
+					"line": 49,
 					"column": 0
 				}
 			]
@@ -320,7 +324,7 @@
 			]
 		},
 		{
-			"path": "../../../../../C:/Users/Osrail/Documents/GitHub/DM-Lib-Typescript/Hotkeys.md",
+			"path": "src/items.ts",
 			"bookmarks": [
 				{
 					"line": -1,
@@ -331,7 +335,52 @@
 					"column": 0
 				},
 				{
-					"line": 203,
+					"line": 115,
+					"column": 24
+				},
+				{
+					"line": -1,
+					"column": 0
+				},
+				{
+					"line": -1,
+					"column": 0
+				},
+				{
+					"line": -1,
+					"column": 0
+				},
+				{
+					"line": -1,
+					"column": 0
+				},
+				{
+					"line": -1,
+					"column": 0
+				},
+				{
+					"line": -1,
+					"column": 0
+				},
+				{
+					"line": -1,
+					"column": 0
+				}
+			]
+		},
+		{
+			"path": "../../../../../C:/Users/Osrail/Documents/GitHub/DM-Lib-Typescript/Hotkeys.md",
+			"bookmarks": [
+				{
+					"line": -1,
+					"column": 0
+				},
+				{
+					"line": 46,
+					"column": 28
+				},
+				{
+					"line": 240,
 					"column": 21
 				},
 				{
@@ -367,7 +416,7 @@
 					"column": 0
 				},
 				{
-					"line": 102,
+					"line": 139,
 					"column": 0
 				}
 			]
