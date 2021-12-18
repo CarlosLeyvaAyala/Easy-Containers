@@ -109,3 +109,4 @@ Platform/easy-containers/index.js
 *.zip
 Platform/easy-containers/skyrimPlatform.ts
 *.js
+.vscode/numbered-bookmarks.json

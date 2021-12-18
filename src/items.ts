@@ -6,6 +6,7 @@ import {
   Actor,
   Ammo,
   Armor,
+  Container,
   Debug,
   Form,
   Game,
@@ -51,7 +52,10 @@ export function ManageItems(
   // Get a database handle
   const hd = LVT("Database handle", GetDbHandle())
   // Do something with the handle
-  const msgAfter = !cn ? OnNoContainer(hd) : DoProcessing(cn, hd)
+  const msgAfter =
+    !cn || !Container.from(cn.getBaseObject())
+      ? OnNoContainer(hd)
+      : DoProcessing(cn, hd)
 
   // Show the operation results
   LV(msgAfter)
