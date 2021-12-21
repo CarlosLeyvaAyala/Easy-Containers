@@ -230,6 +230,7 @@ export function DoSell() {
     n += q
   })
 
+  gold = Math.round(gold)
   p.addItem(Game.getFormEx(0xf), gold, true)
   Debug.messageBox(`${n} items were sold for ${gold}`)
 }
