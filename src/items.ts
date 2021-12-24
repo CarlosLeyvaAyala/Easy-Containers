@@ -6,6 +6,7 @@ import {
   Actor,
   Ammo,
   Armor,
+  Book,
   Container,
   Debug,
   Form,
@@ -181,10 +182,18 @@ const ByCatI = (cat: CategoryFunc, msg: string) =>
 const ByCatAll = (cat: CategoryFunc, msg: string) =>
   DoTransferItems((i: FormNull) => !cat(i), `all ${msg}`)
 
-const IsWeapon: CategoryFunc = (i: FormNull) =>
-  (Weapon.from(i) || Ammo.from(i)) !== null
-const IsArmor: CategoryFunc = (i: FormNull) => Armor.from(i) !== null
+// ===================
+// Replace "XXX" with whatever thing you want to get
+// ===================
+// const IsXXX: CategoryFunc = (i: FormNull) => XXX.from(i) !== null
+// /** Transfer marked XXXs. */
+// export const DoTransferXXXs = ByCat(IsXXX, "XXXs")
+// /** Transfer unmarked XXXs. */
+// export const DoTransferXXXsI = ByCatI(IsXXX, "XXXs")
+// /** Transfer all XXXs. */
+// export const DoTransferXXXAll = ByCatAll(IsXXX, "XXXs")
 
+const IsWeapon: CategoryFunc = (i: FormNull) => Weapon.from(i) !== null
 /** Transfer marked weapons. */
 export const DoTransferWeapons = ByCat(IsWeapon, "weapons")
 /** Transfer unmarked weapons. */
@@ -192,12 +201,29 @@ export const DoTransferWeaponsI = ByCatI(IsWeapon, "weapons")
 /** Transfer all weapons. */
 export const DoTransferWeaponsAll = ByCatAll(IsWeapon, "weapons")
 
+const IsArmor: CategoryFunc = (i: FormNull) => Armor.from(i) !== null
 /** Transfer marked armors. */
 export const DoTransferArmor = ByCat(IsArmor, "armors")
 /** Transfer unmarked armors. */
 export const DoTransferArmorI = ByCatI(IsArmor, "armors")
 /** Transfer all armors. */
 export const DoTransferArmorAll = ByCatAll(IsArmor, "armors")
+
+const IsBook: CategoryFunc = (i: FormNull) => Book.from(i) !== null
+/** Transfer marked Books. */
+export const DoTransferBooks = ByCat(IsBook, "Books")
+/** Transfer unmarked Books. */
+export const DoTransferBooksI = ByCatI(IsBook, "Books")
+/** Transfer all Books. */
+export const DoTransferBookAll = ByCatAll(IsBook, "Books")
+
+const IsAmmo: CategoryFunc = (i: FormNull) => Ammo.from(i) !== null
+/** Transfer marked Ammo. */
+export const DoTransferAmmo = ByCat(IsAmmo, "ammo")
+/** Transfer unmarked Ammo. */
+export const DoTransferAmmoI = ByCatI(IsAmmo, "ammo")
+/** Transfer all Ammo. */
+export const DoTransferAmmoAll = ByCatAll(IsAmmo, "ammo")
 
 // ;>========================================================
 // ;>===                    SPECIAL                     ===<;

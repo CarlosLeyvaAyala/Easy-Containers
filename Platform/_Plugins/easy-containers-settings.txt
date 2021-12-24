@@ -1,6 +1,18 @@
 {
-  "loggingLevel": "none",
-  "hkMark1": "Num1",
-  "hkTransfer1": "Num2",
-  "hkTrUWeapArmr": "Num3"
+  "loggingLevel": "error",
+  "sellingMultiplier": 0.5,
+  "hotkeys":{
+    "sell": "Ctrl Shift Enter",
+    "inverse": "Shift",
+    "mark": "Ctrl Num1",
+    "transfer": "Ctrl Num2",
+    "weapon": "Ctrl Num3",
+    "ammo": "Ctrl Num4",
+    "armor": "Ctrl Num5",
+    "transferAll": "Ctrl Alt Num2",
+    "allWeapons": "Ctrl Alt Num3",
+    "allAmmo": "Ctrl Alt Num4",
+    "allArmors": "Ctrl Alt Num5",
+    "skimpy": "Ctrl NumEnter"
+  }
 }

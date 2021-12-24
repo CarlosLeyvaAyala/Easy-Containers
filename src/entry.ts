@@ -4,9 +4,15 @@ import {
   DoSell,
   DoTransfer,
   DoTransferAll,
+  DoTransferAmmo,
+  DoTransferAmmoAll,
+  DoTransferAmmoI,
   DoTransferArmor,
   DoTransferArmorAll,
   DoTransferArmorI,
+  DoTransferBookAll,
+  DoTransferBooks,
+  DoTransferBooksI,
   DoTransferI,
   DoTransferWeapons,
   DoTransferWeaponsAll,
@@ -14,55 +20,69 @@ import {
   DoTrSkimpy,
   DoTrSkimpyI,
 } from "items"
-import { GetHotkey, inverseHk, LA, LE, modNameDisplay } from "shared"
-import { Debug, on, once, printConsole } from "skyrimPlatform"
+import { GetHotkey, GHk, inverseHk, LA, LE, modNameDisplay } from "shared"
+import { Debug, on, once } from "skyrimPlatform"
 
 let invalidInverse = false
 export function main() {
-  // const Inverse =
-  //   inverseHk === "Alt"
-  //     ? H.IsAltPressed
-  //     : inverseHk === "Ctrl"
-  //     ? H.IsCtrlPressed
-  //     : inverseHk === "Shift"
-  //     ? H.IsShiftPressed
-  //     : C.Return(MarkInvalidInv(), H.IsShiftPressed)
-
   /** Listen to some hotkey by its name in the settings file */
   const L = (k: string) => H.ListenTo(GetHotkey(k))
-  const LI = (k: string) => H.ListenTo(Inv(GetHotkey(k)))
+  const LI = (k: string) => H.ListenTo(Inv(GHk(k)))
+
+  // ===================
+  // Replace "XXX" with whatever thing you want to get
+  // ===================
+  // const OnTransferXXX = L("XXX")
+  // const OnTransferXXXI = LI("XXX")
+  // const OnTransferAllXXXs = L("allXXXs")
 
   const OnMark = L("mark")
   const OnTransfer = L("transfer")
   const OnTransferI = LI("transfer")
   const OnTransferWeapon = L("weapon")
   const OnTransferWeaponI = LI("weapon")
+  const OnTransferAmmo = L("ammo")
+  const OnTransferAmmoI = LI("ammo")
   const OnTransferArmor = L("armor")
   const OnTransferArmorI = LI("armor")
+  const OnTransferBook = L("book")
+  const OnTransferBookI = LI("book")
   const OnTransferSkimpy = L("skimpy")
   const OnTransferSkimpyI = LI("skimpy")
 
   const OnTransferAll = L("transferAll")
   const OnTransferAllWeapons = L("allWeapons")
+  const OnTransferAllAmmo = L("allAmmo")
   const OnTransferAllArmors = L("allArmors")
+  const OnTransferAllBooks = L("allBooks")
 
   const OnSell = L("sell")
 
   LA("Initialization success.")
 
+  // OnTransferAllXXXs(DoTransferXXXAll)
+  // OnTransferXXX(DoTransferXXX)
+  // OnTransferXXXI(DoTransferXXXI)
+
   on("update", () => {
     OnSell(DoSell)
     OnTransferAll(DoTransferAll)
     OnTransferAllWeapons(DoTransferWeaponsAll)
+    OnTransferAllAmmo(DoTransferAmmoAll)
     OnTransferAllArmors(DoTransferArmorAll)
+    OnTransferAllBooks(DoTransferBookAll)
 
     OnMark(DoMarkItems)
     OnTransfer(DoTransfer)
     OnTransferI(DoTransferI)
     OnTransferWeapon(DoTransferWeapons)
     OnTransferWeaponI(DoTransferWeaponsI)
+    OnTransferAmmo(DoTransferAmmo)
+    OnTransferAmmoI(DoTransferAmmoI)
     OnTransferArmor(DoTransferArmor)
     OnTransferArmorI(DoTransferArmorI)
+    OnTransferBook(DoTransferBooks)
+    OnTransferBookI(DoTransferBooksI)
 
     OnTransferSkimpy(DoTrSkimpy)
     OnTransferSkimpyI(DoTrSkimpyI)
