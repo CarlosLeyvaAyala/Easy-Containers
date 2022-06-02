@@ -9,21 +9,21 @@
         "strictNullChecks": true,
         "strictPropertyInitialization": true,
         "module": "System",
-        "target": "ES2015",
-        "outFile": "F:/Skyrim SE/MO2/overwrite/Platform/Plugins/easy-containers.js",
+        "target": "ES2017",
         "lib": [
-            "ES2015"
+            "ES2017"
         ],
         "paths": {
+            "*": [
+                "*",
+                "F:/SteamLibrary/steamapps/common/Skyrim Special Edition/Data/Platform/Modules/*"
+            ],
             "chai": [
                 "./node_modules/@types/chai"
             ]
         },
-        "baseUrl": "F:/Steam/steamapps/common/Skyrim Special Edition/Data/Platform/Modules",
-        "rootDirs": [
-            "F:/Steam/steamapps/common/Skyrim Special Edition/Data/Platform/Modules",
-            "F:/Skyrim SE/MO2/mods/Easy Containers-src"
-        ]
+        "outFile": "F:/Skyrim SE/MO2/overwrite/Platform/Plugins/easy-containers.js",
+        "baseUrl": "."
     },
     "include": [
         "./*.ts"

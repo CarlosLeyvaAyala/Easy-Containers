@@ -1,7 +1,7 @@
 import { DebugLib as D, Hotkeys as H } from "DMLib"
 import { settings } from "skyrimPlatform"
 
-export const modNameDisplay = "Easy Containers"
+export const modNameDisplay = "EasyContainers"
 const mod_name = "easy-containers"
 const d = D.Log.CreateAll(
   modNameDisplay,
