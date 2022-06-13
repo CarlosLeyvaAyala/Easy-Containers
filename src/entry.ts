@@ -1,5 +1,12 @@
-import { Combinators as C, DebugLib as D, Hotkeys as H, Hotkeys } from "DMLib"
 import {
+  Combinators as C,
+  DebugLib as D,
+  FormLib,
+  Hotkeys as H,
+  Hotkeys,
+} from "DMLib"
+import {
+  Autocraft,
   DoMarkItems,
   DoSell,
   DoTransfer,
@@ -20,14 +27,30 @@ import {
   DoTrSkimpy,
   DoTrSkimpyI,
 } from "items"
-import { GetHotkey, GHk, inverseHk, LA, LE, modNameDisplay } from "shared"
-import { Debug, on, once } from "skyrimPlatform"
+import { GetHotkey, GHk, inverseHk, LA, LE, mcm, modNameDisplay } from "shared"
+import {
+  Debug,
+  Furniture,
+  ObjectReference,
+  on,
+  once,
+  printConsole,
+} from "skyrimPlatform"
+
+interface ListeningFunctions {
+  OnTransfer: Hotkeys.ListeningFunction
+  OnTransferInv: Hotkeys.ListeningFunction
+}
 
 let invalidInverse = false
 export function main() {
   /** Listen to some hotkey by its name in the settings file */
   const L = (k: string) => H.ListenTo(GetHotkey(k))
   const LI = (k: string) => H.ListenTo(Inv(GHk(k)))
+
+  function CreateListeningFuncs(hotkeyName: string): ListeningFunctions {
+    return { OnTransfer: L(hotkeyName), OnTransferInv: LI(hotkeyName) }
+  }
 
   // ===================
   // Replace "XXX" with whatever thing you want to get
@@ -55,6 +78,7 @@ export function main() {
   const OnTransferAllAmmo = L("allAmmo")
   const OnTransferAllArmors = L("allArmors")
   const OnTransferAllBooks = L("allBooks")
+  const Ingredients = CreateListeningFuncs("autoIngredients")
 
   const OnSell = L("sell")
 
@@ -84,6 +108,9 @@ export function main() {
     OnTransferBook(DoTransferBooks)
     OnTransferBookI(DoTransferBooksI)
 
+    Ingredients.OnTransfer(Autocraft.Ingredients.SendTo)
+    Ingredients.OnTransferInv(Autocraft.Ingredients.GetFrom)
+
     OnTransferSkimpy(DoTrSkimpy)
     OnTransferSkimpyI(DoTrSkimpyI)
   })
@@ -94,7 +121,25 @@ export function main() {
       `${modNameDisplay}:\nThe hotkey for inverting operations found in your settings file is invalid.\nReverting to default: Shift.`
     )
   })
+
+  on("furnitureEnter", (e) => {
+    if (!IsPlayer(e.actor)) return
+    if (IsAlchemyLab(e.target) && mcm.autocraft.alchemy)
+      Autocraft.Ingredients.GetFrom()
+  })
+
+  on("furnitureExit", (e) => {
+    if (!IsPlayer(e.actor)) return
+    if (IsAlchemyLab(e.target) && mcm.autocraft.alchemy)
+      Autocraft.Ingredients.SendTo()
+  })
 }
+
+const IsPlayer = (f: ObjectReference) => f.getFormID() === FormLib.playerId
+const IsAlchemyLab = (f: ObjectReference) => ObjRefHasName(f, "alchemy")
+
+const ObjRefHasName = (f: ObjectReference, name: string) =>
+  f.getBaseObject()?.getName().toLowerCase().includes(name)
 
 const MarkInvalidInv = () => {
   invalidInverse = true

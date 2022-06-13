@@ -1,4 +1,4 @@
-import { Combinators as C, FormLib } from "DMLib"
+import { Combinators as C, DebugLib, FormLib } from "DMLib"
 import * as JDB from "JContainers/JDB"
 import * as JFormMap from "JContainers/JFormMap"
 import { ArmorArg, IsNotRegistered, IsRegistered } from "skimpify-api"
@@ -11,10 +11,11 @@ import {
   Debug,
   Form,
   Game,
+  Ingredient,
   ObjectReference,
   Weapon,
 } from "skyrimPlatform"
-import { LI, LV, LVT, sellMult } from "./shared"
+import { chestPath, itemsPath, LE, LI, LV, LVT, mcm } from "./shared"
 
 /** General item management function.
  *
@@ -63,18 +64,15 @@ export function ManageItems(
   Debug.messageBox(msgAfter)
 }
 
-/** Where the marked items database is located. */
-const basePath = ".EasyContainers.items"
-
 /** Gets a memory database handle to a JContainers object, creating it if it doesn't exist. */
 function GetDbHandle(): number {
-  const r = JDB.solveObj(basePath)
+  const r = JDB.solveObj(itemsPath)
   return r !== 0 ? r : JFormMap.object()
 }
 
 /** Saves a JContainers object handle to the memory database. */
 function SaveDbHandle(h: number) {
-  JDB.solveObjSetter(basePath, h, true)
+  JDB.solveObjSetter(itemsPath, h, true)
 }
 
 type DbHandle = number
@@ -123,7 +121,7 @@ type InvalidItemFunc = (
 ) => boolean
 
 /** Transfers all marked items in player inventory to the selected container in the crosshair.\
- * Equiped and favorited items are not transferred.
+ * Equipped and favorited items are not transferred.
  */
 function DoTransferItems(IsInvalid: InvalidItemFunc, msg: string = "items") {
   return () =>
@@ -133,15 +131,37 @@ function DoTransferItems(IsInvalid: InvalidItemFunc, msg: string = "items") {
         const p = Game.getPlayer() as Actor
         let n = 0
         FormLib.ForEachItemR(p, (item) => {
-          if (IsInvalid(item, h, c) || IsEquipOrFav(item, p)) return
+          const Invalid = (_: FormNull) =>
+            IsInvalid(item, h, c) || IsEquipOrFav(item, p)
 
-          p.removeItem(item, p.getItemCount(item), true, c) // Remove all items belonging to the marked type
+          TransferItemByInvalid(item, p, c, Invalid)
           n++
         })
         return `${n} types of items were transferred`
       },
       C.K("Select a valid container")
     )
+}
+
+/** Transfers items beween two containers. */
+function TransferItemByInvalid(
+  item: FormNull,
+  from: ObjectReference,
+  to: ObjectReference,
+  IsInvalidItem: (i: FormNull) => boolean
+) {
+  if (IsInvalidItem(item)) return
+  from.removeItem(item, from.getItemCount(item), true, to)
+}
+
+/** Transfers items beween two containers. */
+function TransferItem(
+  item: FormNull,
+  from: ObjectReference,
+  to: ObjectReference,
+  IsValid: (i: FormNull) => boolean
+) {
+  if (IsValid(item)) from.removeItem(item, from.getItemCount(item), true, to)
 }
 
 /** Transfers all non equipped/favorited items. */
@@ -225,6 +245,8 @@ export const DoTransferAmmoI = ByCatI(IsAmmo, "ammo")
 /** Transfer all Ammo. */
 export const DoTransferAmmoAll = ByCatAll(IsAmmo, "ammo")
 
+const IsIngredient: CategoryFunc = (i: FormNull) => Ingredient.from(i) !== null
+
 // ;>========================================================
 // ;>===                    SPECIAL                     ===<;
 // ;>========================================================
@@ -251,7 +273,7 @@ export function DoSell() {
   FormLib.ForEachItemR(p, (i) => {
     if (!i || IsNotDbRegistered(i, h) || IsEquipOrFav(i, p)) return
     const q = p.getItemCount(i)
-    gold += i.getGoldValue() * q * sellMult
+    gold += i.getGoldValue() * q * mcm.sellingMultiplier
     p.removeItem(i, q, true, null)
     n += q
   })
@@ -260,3 +282,107 @@ export function DoSell() {
   p.addItem(Game.getFormEx(0xf), gold, true)
   Debug.messageBox(`${n} items were sold for ${gold}`)
 }
+
+export namespace Autocraft {
+  const enum ChestType {
+    ingredients = "ingredients",
+  }
+  /** Player is used as dummy Form so global chests FormIds can be saved to database */
+  const Player = () => Game.getPlayer() as Actor
+
+  namespace Base {
+    const ChestPath = (chest: ChestType) => `${chestPath}.${chest}`
+
+    function GetChestDbHandle(path: string) {
+      const r = JDB.solveObj(path)
+      return r !== 0 ? r : JFormMap.object()
+    }
+
+    function SaveChestDbHandle(h: number, path: string) {
+      JDB.solveObjSetter(path, h, true)
+    }
+
+    function LogNoChestCreated(name: ChestType) {
+      const msg =
+        `Couldn't create the auto craft ${name} chest in Tamriel. ` +
+        `Are you using a mod that substantially changes the game?`
+      LE(msg)
+    }
+
+    /** Gets a permanent chest. Creates it if it doesn't exist. */
+    export function GetChest(chest: ChestType) {
+      const path = ChestPath(chest)
+      const h = GetChestDbHandle(path)
+      let frm = JFormMap.getForm(h, Player())
+
+      if (!frm) {
+        const newChest = FormLib.CreatePersistentChest()
+        if (!newChest) return DebugLib.Log.R(LogNoChestCreated(chest), null)
+        frm = Game.getFormEx(newChest)
+        JFormMap.setForm(h, Player(), frm)
+        SaveChestDbHandle(h, path)
+      }
+
+      return frm
+    }
+  }
+
+  function LogNoChest(name: ChestType) {
+    const msg = `Global auto crafting chest for ${name} couldn't be found. Contact the developer.`
+    LE(msg)
+  }
+
+  export interface AutocraftFunctions {
+    /** Function for sending from player to autocraft chest. */
+    SendTo: () => void
+    /** Function for sending from autocraft chest to player. */
+    GetFrom: () => void
+  }
+
+  const BlankFunction = () => {}
+
+  const Chest = (chest: ChestType) => () => {
+    const c = ObjectReference.from(Base.GetChest(chest))
+    if (!c) {
+      LogNoChest(chest)
+      return null
+    }
+    return c
+  }
+
+  type ObjFunc = () => ObjectReference | null
+
+  const ExecuteTransfer =
+    (from: ObjFunc, to: ObjFunc, IsValid: CategoryFunc) => () => {
+      const f = from()
+      const t = to()
+      if (!f || !t) return
+
+      FormLib.ForEachItemR(f, (item) => {
+        TransferItem(item, f, t, IsValid)
+      })
+    }
+
+  function CreateAutocraft(
+    chest: ChestType,
+    IsSomething: CategoryFunc
+  ): AutocraftFunctions {
+    const AllAreValid = () => true
+    return {
+      SendTo: ExecuteTransfer(Player, Chest(chest), IsSomething), // TODO: Test if item is quest locked
+      GetFrom: ExecuteTransfer(Chest(chest), Player, AllAreValid),
+    }
+  }
+
+  export const Ingredients = CreateAutocraft(
+    ChestType.ingredients,
+    IsIngredient
+  )
+}
+
+// JFormMap.hasKey(h, item)
+// )
+
+// n++
+// if (exists) return
+// JFormMap.setInt(h, item, 0)

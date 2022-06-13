@@ -1,7 +1,12 @@
 {
   "loggingLevel": "error",
   "sellingMultiplier": 0.5,
-  "hotkeys":{
+  "autocraft": {
+    "alchemy": false, 
+    "smithing": true,
+    "enchanting": true
+  },
+  "hotkeys": {
     "sell": "Ctrl Shift Enter",
     "inverse": "Shift",
     "mark": "Ctrl Num1",
@@ -9,6 +14,7 @@
     "weapon": "Ctrl Num3",
     "ammo": "Ctrl Num4",
     "armor": "Ctrl Num5",
+    "autoIngredients": "Ctrl Num9",
     "transferAll": "Ctrl Alt Num2",
     "allWeapons": "Ctrl Alt Num3",
     "allAmmo": "Ctrl Alt Num4",

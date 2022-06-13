@@ -21,11 +21,34 @@ export const LI = d.Info
 export const LV = d.Verbose
 export const LVT = d.TapV
 
+/** Get hotkey from settings */
 export const GHk = (k: string) => H.FromObject(mod_name, "hotkeys", k)
 
 /** Gets a hotkey and logs it to console. */
 export const GetHotkey = H.GetAndLog(LAT, GHk)
 
+export interface EcSettings {
+  loggingLevel: string
+  sellingMultiplier: number
+  autocraft: Autocraft
+  hotkeys: { [key: string]: string }
+}
+
+export interface Autocraft {
+  alchemy: boolean
+  smithing: boolean
+  enchanting: boolean
+}
+
+//@ts-ignore
+export const mcm: EcSettings = settings[mod_name]
 //@ts-ignore
 export const inverseHk = settings[mod_name]["hotkeys"]["inverse"] as string
-export const sellMult = settings[mod_name]["sellingMultiplier"] as number
+// export const sellMult = settings[mod_name]["sellingMultiplier"] as number
+
+/** This mod database on JContainers. */
+export const basePath = ".EasyContainers"
+/** Where the marked items database is located. */
+export const itemsPath = `${basePath}.items`
+/** Where the global chests database is located. */
+export const chestPath = `${basePath}.chests`
