@@ -44,7 +44,6 @@ export interface Autocraft {
 export const mcm: EcSettings = settings[mod_name]
 //@ts-ignore
 export const inverseHk = settings[mod_name]["hotkeys"]["inverse"] as string
-// export const sellMult = settings[mod_name]["sellingMultiplier"] as number
 
 /** This mod database on JContainers. */
 export const basePath = ".EasyContainers"
