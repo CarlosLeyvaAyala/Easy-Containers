@@ -1,8 +1,16 @@
 import { Combinators as C, DebugLib as D, Hotkeys as H, Hotkeys } from "DMLib"
 import { Autocraft, Category, TransferFunctions } from "items"
-import { GetHotkey, GHk, inverseHk, LE } from "shared"
+import { GetHotkey, GHk, inverseHk, LE, modNameDisplay } from "shared"
+import { Debug } from "skyrimPlatform"
 
-export let invalidInverse = false
+let invalidInverse = false
+
+export function CheckInvalidInverseHk() {
+  if (!invalidInverse) return
+  Debug.messageBox(
+    `${modNameDisplay}:\nThe hotkey for inverting operations found in your settings file is invalid.\nReverting to default: Shift.`
+  )
+}
 
 const MarkInvalidInv = () => {
   invalidInverse = true
