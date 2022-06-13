@@ -13,6 +13,7 @@ import {
   Game,
   Ingredient,
   ObjectReference,
+  Quest,
   Weapon,
 } from "skyrimPlatform"
 import { chestPath, itemsPath, LE, LI, LV, LVT, mcm } from "./shared"
@@ -366,8 +367,22 @@ export namespace Autocraft {
     }
   }
 
+  /** A Return To Your Roots */
+  const TheBullshitQuest = () =>
+    Quest.from(Game.getFormFromFile(0xc9ba0, "Skyrim.esm"))
+
+  const IsCrimsonNirnroot = (i: FormNull) => i?.getFormID() === 0xb701a
+
+  function IsAutoIngredient(i: FormNull): boolean {
+    const is = IsIngredient(i)
+    // return is
+    if (!is) return false
+    if (IsCrimsonNirnroot(i) && TheBullshitQuest()?.isActive()) return false
+    return true
+  }
+
   export const Ingredients = CreateAutocraft(
     ChestType.ingredients,
-    IsIngredient
+    IsAutoIngredient
   )
 }
