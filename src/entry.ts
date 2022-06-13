@@ -7,39 +7,18 @@ import {
 } from "DMLib"
 import {
   Autocraft,
+  Category,
   DoMarkItems,
   DoSell,
-  DoTransfer,
-  DoTransferAll,
-  DoTransferAmmo,
-  DoTransferAmmoAll,
-  DoTransferAmmoI,
-  DoTransferArmor,
-  DoTransferArmorAll,
-  DoTransferArmorI,
-  DoTransferBookAll,
-  DoTransferBooks,
-  DoTransferBooksI,
-  DoTransferI,
-  DoTransferWeapons,
-  DoTransferWeaponsAll,
-  DoTransferWeaponsI,
-  DoTrSkimpy,
-  DoTrSkimpyI,
+  TransferFunctions,
 } from "items"
 import { GetHotkey, GHk, inverseHk, LA, LE, mcm, modNameDisplay } from "shared"
-import {
-  Debug,
-  Furniture,
-  ObjectReference,
-  on,
-  once,
-  printConsole,
-} from "skyrimPlatform"
+import { Debug, ObjectReference, on, once } from "skyrimPlatform"
 
 interface ListeningFunctions {
   OnTransfer: Hotkeys.ListeningFunction
   OnTransferInv: Hotkeys.ListeningFunction
+  OnTransferAll?: Hotkeys.ListeningFunction
 }
 
 let invalidInverse = false
@@ -48,71 +27,81 @@ export function main() {
   const L = (k: string) => H.ListenTo(GetHotkey(k))
   const LI = (k: string) => H.ListenTo(Inv(GHk(k)))
 
-  function CreateListeningFuncs(hotkeyName: string): ListeningFunctions {
-    return { OnTransfer: L(hotkeyName), OnTransferInv: LI(hotkeyName) }
+  function CreateListeningFuncs(
+    hotkeyName: string,
+    hotkeyAll?: string
+  ): ListeningFunctions {
+    return {
+      OnTransfer: L(hotkeyName),
+      OnTransferInv: LI(hotkeyName),
+      OnTransferAll: hotkeyAll ? L(hotkeyAll) : undefined,
+    }
   }
 
-  // ===================
-  // Replace "XXX" with whatever thing you want to get
-  // ===================
-  // const OnTransferXXX = L("XXX")
-  // const OnTransferXXXI = LI("XXX")
-  // const OnTransferAllXXXs = L("allXXXs")
-
   const OnMark = L("mark")
-  const OnTransfer = L("transfer")
-  const OnTransferI = LI("transfer")
-  const OnTransferWeapon = L("weapon")
-  const OnTransferWeaponI = LI("weapon")
-  const OnTransferAmmo = L("ammo")
-  const OnTransferAmmoI = LI("ammo")
-  const OnTransferArmor = L("armor")
-  const OnTransferArmorI = LI("armor")
-  const OnTransferBook = L("book")
-  const OnTransferBookI = LI("book")
-  const OnTransferSkimpy = L("skimpy")
-  const OnTransferSkimpyI = LI("skimpy")
-
-  const OnTransferAll = L("transferAll")
-  const OnTransferAllWeapons = L("allWeapons")
-  const OnTransferAllAmmo = L("allAmmo")
-  const OnTransferAllArmors = L("allArmors")
-  const OnTransferAllBooks = L("allBooks")
-  const Ingredients = CreateListeningFuncs("autoIngredients")
-
   const OnSell = L("sell")
+  const Marked = CreateListeningFuncs("transfer", "transferAll")
+  const Weapons = CreateListeningFuncs("weapon", "allWeapons")
+  const Armors = CreateListeningFuncs("armor", "allArmors")
+  const Ammos = CreateListeningFuncs("ammo", "allAmmo")
+  const Books = CreateListeningFuncs("book", "allBooks")
+  const Skimpy = CreateListeningFuncs("skimpy")
+
+  const AutoIngredients = CreateListeningFuncs("autoIngredients")
 
   LA("Initialization success.")
 
-  // OnTransferAllXXXs(DoTransferXXXAll)
-  // OnTransferXXX(DoTransferXXX)
-  // OnTransferXXXI(DoTransferXXXI)
+  /** Creates a function that listens to many hotkeys. */
+  function GenListeners(
+    listeners: ListeningFunctions,
+    callbacks: TransferFunctions
+  ) {
+    const All = listeners.OnTransferAll
+    if (!All)
+      return () => {
+        listeners.OnTransfer(callbacks.Transfer)
+        listeners.OnTransferInv(callbacks.TransferInv)
+      }
+
+    return () => {
+      listeners.OnTransfer(callbacks.Transfer)
+      listeners.OnTransferInv(callbacks.TransferInv)
+      All(callbacks.TransferAll)
+    }
+  }
+
+  /** Creates a function that listens to many hotkeys related to auto craftloot. */
+  function GenAutocraftL(
+    listeners: ListeningFunctions,
+    callbacks: Autocraft.AutocraftFunctions
+  ) {
+    return () => {
+      listeners.OnTransfer(callbacks.SendTo)
+      listeners.OnTransferInv(callbacks.GetFrom)
+    }
+  }
+
+  const MarkedL = GenListeners(Marked, Category.Marked)
+  const ArmorsL = GenListeners(Armors, Category.Armors)
+  const WeaponsL = GenListeners(Weapons, Category.Weapons)
+  const AmmoL = GenListeners(Ammos, Category.Ammos)
+  const BooksL = GenListeners(Books, Category.Books)
+  const SkimpyL = GenListeners(Skimpy, Category.Skimpy)
+
+  const AutoIngredientsL = GenAutocraftL(AutoIngredients, Autocraft.Ingredients)
 
   on("update", () => {
-    OnSell(DoSell)
-    OnTransferAll(DoTransferAll)
-    OnTransferAllWeapons(DoTransferWeaponsAll)
-    OnTransferAllAmmo(DoTransferAmmoAll)
-    OnTransferAllArmors(DoTransferArmorAll)
-    OnTransferAllBooks(DoTransferBookAll)
-
     OnMark(DoMarkItems)
-    OnTransfer(DoTransfer)
-    OnTransferI(DoTransferI)
-    OnTransferWeapon(DoTransferWeapons)
-    OnTransferWeaponI(DoTransferWeaponsI)
-    OnTransferAmmo(DoTransferAmmo)
-    OnTransferAmmoI(DoTransferAmmoI)
-    OnTransferArmor(DoTransferArmor)
-    OnTransferArmorI(DoTransferArmorI)
-    OnTransferBook(DoTransferBooks)
-    OnTransferBookI(DoTransferBooksI)
+    OnSell(DoSell)
 
-    Ingredients.OnTransfer(Autocraft.Ingredients.SendTo)
-    Ingredients.OnTransferInv(Autocraft.Ingredients.GetFrom)
+    MarkedL()
+    WeaponsL()
+    ArmorsL()
+    AmmoL()
+    BooksL()
+    SkimpyL()
 
-    OnTransferSkimpy(DoTrSkimpy)
-    OnTransferSkimpyI(DoTrSkimpyI)
+    AutoIngredientsL()
   })
 
   once("update", () => {

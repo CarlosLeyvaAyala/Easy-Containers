@@ -1,4 +1,4 @@
-import { Combinators as C, DebugLib, FormLib } from "DMLib"
+import { Combinators as C, DebugLib, FormLib, Hotkeys } from "DMLib"
 import * as JDB from "JContainers/JDB"
 import * as JFormMap from "JContainers/JFormMap"
 import { ArmorArg, IsNotRegistered, IsRegistered } from "skimpify-api"
@@ -134,8 +134,7 @@ function DoTransferItems(IsInvalid: InvalidItemFunc, msg: string = "items") {
           const Invalid = (_: FormNull) =>
             IsInvalid(item, h, c) || IsEquipOrFav(item, p)
 
-          TransferItemByInvalid(item, p, c, Invalid)
-          n++
+          if (TransferItemByInvalid(item, p, c, Invalid)) n++
         })
         return `${n} types of items were transferred`
       },
@@ -150,8 +149,9 @@ function TransferItemByInvalid(
   to: ObjectReference,
   IsInvalidItem: (i: FormNull) => boolean
 ) {
-  if (IsInvalidItem(item)) return
+  if (IsInvalidItem(item)) return false
   from.removeItem(item, from.getItemCount(item), true, to)
+  return true
 }
 
 /** Transfers items beween two containers. */
@@ -161,15 +161,10 @@ function TransferItem(
   to: ObjectReference,
   IsValid: (i: FormNull) => boolean
 ) {
-  if (IsValid(item)) from.removeItem(item, from.getItemCount(item), true, to)
+  const valid = IsValid(item)
+  if (valid) from.removeItem(item, from.getItemCount(item), true, to)
+  return valid
 }
-
-/** Transfers all non equipped/favorited items. */
-export const DoTransferAll = DoTransferItems((_) => false, "ALL items")
-/** Transfer only marked items. */
-export const DoTransfer = DoTransferItems(IsNotDbRegistered, "marked items")
-/** Transfer only unmarked items. */
-export const DoTransferI = DoTransferItems(IsDbRegistered, "unmarked items")
 
 // ;>========================================================
 // ;>===                  BY CATEGORY                   ===<;
@@ -177,75 +172,77 @@ export const DoTransferI = DoTransferItems(IsDbRegistered, "unmarked items")
 
 type CategoryFunc = (i: FormNull) => boolean
 
-/** Tell if an item belongs to some category and is registered in database */
-function MarkedByCat(cat: CategoryFunc): InvalidItemFunc {
-  return (i: FormNull, h: DbHandle) => {
-    if (!cat(i)) return true
-    return IsNotDbRegistered(i, h)
-  }
+export interface TransferFunctions {
+  Transfer: Hotkeys.KeyPressEvt
+  TransferInv: Hotkeys.KeyPressEvt
+  TransferAll: Hotkeys.KeyPressEvt
 }
-
-function UnmarkedByCat(cat: CategoryFunc): InvalidItemFunc {
-  return (i: FormNull, h: DbHandle) => {
-    if (!cat(i)) return true
-    return IsDbRegistered(i, h)
-  }
-}
-
-/** Transfers items that belong to some category and are registered in database */
-const ByCat = (cat: CategoryFunc, msg: string) =>
-  DoTransferItems(MarkedByCat(cat), `marked ${msg}`)
-/** Transfers items that belong to some category and are NOT registered in database */
-const ByCatI = (cat: CategoryFunc, msg: string) =>
-  DoTransferItems(UnmarkedByCat(cat), `unmarked ${msg}`)
-/** Transfers items that belong to some category */
-const ByCatAll = (cat: CategoryFunc, msg: string) =>
-  DoTransferItems((i: FormNull) => !cat(i), `all ${msg}`)
-
-// ===================
-// Replace "XXX" with whatever thing you want to get
-// ===================
-// const IsXXX: CategoryFunc = (i: FormNull) => XXX.from(i) !== null
-// /** Transfer marked XXXs. */
-// export const DoTransferXXXs = ByCat(IsXXX, "XXXs")
-// /** Transfer unmarked XXXs. */
-// export const DoTransferXXXsI = ByCatI(IsXXX, "XXXs")
-// /** Transfer all XXXs. */
-// export const DoTransferXXXAll = ByCatAll(IsXXX, "XXXs")
 
 const IsWeapon: CategoryFunc = (i: FormNull) => Weapon.from(i) !== null
-/** Transfer marked weapons. */
-export const DoTransferWeapons = ByCat(IsWeapon, "weapons")
-/** Transfer unmarked weapons. */
-export const DoTransferWeaponsI = ByCatI(IsWeapon, "weapons")
-/** Transfer all weapons. */
-export const DoTransferWeaponsAll = ByCatAll(IsWeapon, "weapons")
-
-const IsArmor: CategoryFunc = (i: FormNull) => Armor.from(i) !== null
-/** Transfer marked armors. */
-export const DoTransferArmor = ByCat(IsArmor, "armors")
-/** Transfer unmarked armors. */
-export const DoTransferArmorI = ByCatI(IsArmor, "armors")
-/** Transfer all armors. */
-export const DoTransferArmorAll = ByCatAll(IsArmor, "armors")
-
-const IsBook: CategoryFunc = (i: FormNull) => Book.from(i) !== null
-/** Transfer marked Books. */
-export const DoTransferBooks = ByCat(IsBook, "Books")
-/** Transfer unmarked Books. */
-export const DoTransferBooksI = ByCatI(IsBook, "Books")
-/** Transfer all Books. */
-export const DoTransferBookAll = ByCatAll(IsBook, "Books")
-
 const IsAmmo: CategoryFunc = (i: FormNull) => Ammo.from(i) !== null
-/** Transfer marked Ammo. */
-export const DoTransferAmmo = ByCat(IsAmmo, "ammo")
-/** Transfer unmarked Ammo. */
-export const DoTransferAmmoI = ByCatI(IsAmmo, "ammo")
-/** Transfer all Ammo. */
-export const DoTransferAmmoAll = ByCatAll(IsAmmo, "ammo")
-
+const IsArmor: CategoryFunc = (i: FormNull) => Armor.from(i) !== null
+const IsBook: CategoryFunc = (i: FormNull) => Book.from(i) !== null
 const IsIngredient: CategoryFunc = (i: FormNull) => Ingredient.from(i) !== null
+
+export namespace Category {
+  /** Tell if an item belongs to some category and is registered in database */
+  function MarkedByCat(cat: CategoryFunc): InvalidItemFunc {
+    return (i: FormNull, h: DbHandle) => {
+      if (!cat(i)) return true
+      return IsNotDbRegistered(i, h)
+    }
+  }
+
+  function UnmarkedByCat(cat: CategoryFunc): InvalidItemFunc {
+    return (i: FormNull, h: DbHandle) => {
+      if (!cat(i)) return true
+      return IsDbRegistered(i, h)
+    }
+  }
+
+  /** Transfers items that belong to some category and are registered in database */
+  const ByCat = (cat: CategoryFunc, msg: string) =>
+    DoTransferItems(MarkedByCat(cat), `marked ${msg}`)
+  /** Transfers items that belong to some category and are NOT registered in database */
+  const ByCatI = (cat: CategoryFunc, msg: string) =>
+    DoTransferItems(UnmarkedByCat(cat), `unmarked ${msg}`)
+  /** Transfers items that belong to some category */
+  const ByCatAll = (cat: CategoryFunc, msg: string) =>
+    DoTransferItems((i: FormNull) => !cat(i), `all ${msg}`)
+
+  function CreateTransferFuncs(
+    IsWhat: CategoryFunc,
+    msg: string
+  ): TransferFunctions {
+    return {
+      Transfer: ByCat(IsWhat, msg),
+      TransferInv: ByCatI(IsWhat, msg),
+      TransferAll: ByCatAll(IsWhat, msg),
+    }
+  }
+
+  export const Weapons = CreateTransferFuncs(IsWeapon, "weapons")
+  export const Armors = CreateTransferFuncs(IsArmor, "armors")
+  export const Ammos = CreateTransferFuncs(IsAmmo, "ammo")
+  export const Books = CreateTransferFuncs(IsBook, "books")
+
+  export const Marked: TransferFunctions = {
+    /** Transfer only marked items. */
+    Transfer: DoTransferItems(IsNotDbRegistered, "marked items"),
+    /** Transfer only unmarked items. */
+    TransferInv: DoTransferItems(IsDbRegistered, "unmarked items"),
+    /** Transfers all non equipped/favorited items. */
+    TransferAll: DoTransferItems((_) => false, "ALL items"),
+  }
+
+  export const Skimpy: TransferFunctions = {
+    /** Transfer armors registered in the Skimpify Framework. */
+    Transfer: DoTransferItems(TranferSkimpy(IsNotRegistered)),
+    /** Transfer armors NOT registered in the Skimpify Framework. */
+    TransferInv: DoTransferItems(TranferSkimpy(IsRegistered)),
+    TransferAll: Hotkeys.DoNothing,
+  }
+}
 
 // ;>========================================================
 // ;>===                    SPECIAL                     ===<;
@@ -258,11 +255,6 @@ function TranferSkimpy(f: (a: ArmorArg) => boolean) {
     return !aa ? false : f(aa)
   }
 }
-
-/** Transfer armors registered in the Skimpify Framework. */
-export const DoTrSkimpy = DoTransferItems(TranferSkimpy(IsNotRegistered))
-/** Transfer armors NOT registered in the Skimpify Framework. */
-export const DoTrSkimpyI = DoTransferItems(TranferSkimpy(IsRegistered))
 
 /** Sell all marked items */
 export function DoSell() {
@@ -334,9 +326,9 @@ export namespace Autocraft {
 
   export interface AutocraftFunctions {
     /** Function for sending from player to autocraft chest. */
-    SendTo: () => void
+    SendTo: Hotkeys.KeyPressEvt
     /** Function for sending from autocraft chest to player. */
-    GetFrom: () => void
+    GetFrom: Hotkeys.KeyPressEvt
   }
 
   const BlankFunction = () => {}
@@ -379,10 +371,3 @@ export namespace Autocraft {
     IsIngredient
   )
 }
-
-// JFormMap.hasKey(h, item)
-// )
-
-// n++
-// if (exists) return
-// JFormMap.setInt(h, item, 0)

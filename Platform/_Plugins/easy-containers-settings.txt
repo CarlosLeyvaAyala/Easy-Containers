@@ -2,7 +2,7 @@
   "loggingLevel": "error",
   "sellingMultiplier": 0.5,
   "autocraft": {
-    "alchemy": false, 
+    "alchemy": true, 
     "smithing": true,
     "enchanting": true
   },
