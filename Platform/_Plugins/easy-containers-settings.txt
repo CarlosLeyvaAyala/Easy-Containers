@@ -2,9 +2,9 @@
   "loggingLevel": "error",
   "sellingMultiplier": 0.5,
   "autocraft": {
-    "alchemy": true, 
-    "smithing": true,
-    "enchanting": true
+    "alchemy": false,
+    "smithing": false,
+    "enchanting": false
   },
   "hotkeys": {
     "sell": "Ctrl Shift Enter",

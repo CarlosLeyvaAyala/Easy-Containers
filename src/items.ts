@@ -296,27 +296,27 @@ export namespace Autocraft {
     }
 
     function LogNoChestCreated(name: ChestType) {
-      const msg =
-        `Couldn't create the auto craft ${name} chest in Tamriel. ` +
-        `Are you using a mod that substantially changes the game?`
-      LE(msg)
+      const fmt = `Error with auto craft ${name} chest: `
+      return (msg: string) => LE(`${fmt} ${msg}`)
     }
 
     /** Gets a permanent chest. Creates it if it doesn't exist. */
     export function GetChest(chest: ChestType) {
       const path = ChestPath(chest)
       const h = GetChestDbHandle(path)
-      let frm = JFormMap.getForm(h, Player())
 
-      if (!frm) {
-        const newChest = FormLib.CreatePersistentChest()
-        if (!newChest) return DebugLib.Log.R(LogNoChestCreated(chest), null)
-        frm = Game.getFormEx(newChest)
+      const Getter = () => {
+        return JFormMap.getForm(h, Player())
+      }
+      const Setter = (frm: Form | null) => {
         JFormMap.setForm(h, Player(), frm)
         SaveChestDbHandle(h, path)
       }
-
-      return frm
+      return FormLib.GetPersistentChest(
+        Getter,
+        Setter,
+        LogNoChestCreated(chest)
+      )
     }
   }
 
@@ -374,9 +374,7 @@ export namespace Autocraft {
   const IsCrimsonNirnroot = (i: FormNull) => i?.getFormID() === 0xb701a
 
   function IsAutoIngredient(i: FormNull): boolean {
-    const is = IsIngredient(i)
-    // return is
-    if (!is) return false
+    if (!IsIngredient(i)) return false
     if (IsCrimsonNirnroot(i) && TheBullshitQuest()?.isActive()) return false
     return true
   }
