@@ -30,14 +30,35 @@ export const GetHotkey = H.GetAndLog(LAT, GHk)
 export interface EcSettings {
   loggingLevel: string
   sellingMultiplier: number
-  autocraft: Autocraft
   hotkeys: { [key: string]: string }
+  autocrafting: Autocrafting
 }
 
-export interface Autocraft {
-  alchemy: boolean
-  smithing: boolean
-  enchanting: boolean
+export interface Autocrafting {
+  alchemy: Alchemy
+  smithing: Home
+  enchanting: Enchanting
+  home: Home
+}
+
+export interface Alchemy {
+  onFurniture: boolean
+}
+
+export interface Enchanting {
+  onFurniture: boolean
+  storeEmpty: boolean
+  storeFilled: boolean
+  filled: string[]
+  empty: string[]
+  exceptions: string[]
+}
+
+export interface Home {
+  onFurniture: boolean
+  keywords: string[]
+  forms: string[]
+  exceptions: string[]
 }
 
 //@ts-ignore

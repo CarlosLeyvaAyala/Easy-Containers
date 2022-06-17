@@ -30,5 +30,6 @@ export function AutocraftExit(e: FurnitureEvent) {
 
 function FurnitureAction(e: FurnitureEvent, a: ActionFunctions) {
   if (!IsPlayer(e.actor)) return
-  if (IsAlchemyLab(e.target) && mcm.autocraft.alchemy) a.Alchemy()
+  if (IsAlchemyLab(e.target) && mcm.autocrafting.alchemy.onFurniture)
+    a.Alchemy()
 }

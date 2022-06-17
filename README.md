@@ -19,25 +19,10 @@ Whenever you have Marked items in inventory, all of them will be moved to any co
 - Press the "transfer" hotkey. 
 - All Marked items will be transferred to that container. 
 
+This mod will never transfer favorited or equipped items.
+
 ## Configuration
-The plugin can be configured in `Data\Platform\Plugins\easy-containers-settings.txt`.
-
-Settings:
-- `loggingLevel`: How much spam do you want in your Skyrim console?\
-  Possible values:
-
-  - `"none"`: No spam.
-  - `"error"`: Just errors and stuff like that.
-  - `"info"`: Detailed info so players can know if things are going as expected, but not enough for actual debugging.
-  - `"verbose"`: Info meant for developers. Use it for reporting errors or unexpected behavior.
-
-  You must use that word casing (double quotes included) as is, otherwise you'll get `"verbose"` level, no matter what.
-
-- `hkMark1`: Hotkey for marking items inside a chest  (default Q).
-
-- `hkTransfer1`: Hotkey for transferring marked items  (default W).
-
-See [DXScanCodes][] for possible hotkey values.
+See [Configuration][] for more details.
 
 ## Hard requirements
 
@@ -45,7 +30,6 @@ You'll need these mods to make it work.
 
 - [Skyrim Platform][]
 - [JContainers][]
-
 
 # Developing
 
@@ -65,13 +49,12 @@ Since this plugin is also meant to serve as a guide to [Skyrim Platform][] newco
 
 You can compile and run that version to see how hilariously slow and clumsy is Papyrus compared to [Skyrim Platform][].
 
-
 ### Before  building
 
 The less hassle-free way to develop plugins is to just put [Skyrim Platform][] files in the Skyrim Data folder.
 
 Should be trivial if you use Vortex, but with MO that would mean folder pollution.\
-Do it anyway, it's really the best way. You will lose plugin hot-reloading by using MO2 **for developing**.
+Do it anyway, it's really the best way. 
 
 ### Building steps for beginners
 
@@ -159,3 +142,7 @@ Just putting this as a reminder for myself on how to work.
 [baseUrl]: https://www.typescriptlang.org/tsconfig#baseUrl
 
 [DXScanCodes]: https://www.creationkit.com/index.php?title=Input_Script#DXScanCodes
+
+[Hotkeys]: https://github.com/CarlosLeyvaAyala/DM-Lib-Typescript/blob/main/Hotkeys.md
+
+[Configuration]: Configuration.md

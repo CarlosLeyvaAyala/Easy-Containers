@@ -93,6 +93,8 @@ const Books = CreateListeningFuncs("book", "allBooks")
 const Skimpy = CreateListeningFuncs("skimpy")
 
 const AutoIngredients = CreateListeningFuncs("autoIngredients")
+const AutoHome = CreateListeningFuncs("autoHome")
+const AutoAll = CreateListeningFuncs("autoAll")
 
 /** Listen to hotkeys related to marked items */
 export const MarkedL = GenListeners(Marked, Category.Marked)
@@ -107,8 +109,11 @@ export const BooksL = GenListeners(Books, Category.Books)
 /** Listen to hotkeys related to skimpy armors */
 export const SkimpyL = GenListeners(Skimpy, Category.Skimpy)
 
-/** Listen to hotkeys related to auto craftloot ingredients */
+// Listen to hotkeys related to auto craftloot ingredients
 export const AutoIngredientsL = GenAutocraftL(
   AutoIngredients,
   Autocraft.Ingredients
 )
+
+export const AutoHomeL = GenAutocraftL(AutoHome, Autocraft.Home)
+export const AutoAllL = GenAutocraftL(AutoAll, Autocraft.All)

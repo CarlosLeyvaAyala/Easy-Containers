@@ -1,4 +1,4 @@
-import { Combinators as C, DebugLib, FormLib, Hotkeys } from "DMLib"
+import { Combinators as C, FormLib, Hotkeys } from "DMLib"
 import * as JDB from "JContainers/JDB"
 import * as JFormMap from "JContainers/JFormMap"
 import { ArmorArg, IsNotRegistered, IsRegistered } from "skimpify-api"
@@ -12,7 +12,9 @@ import {
   Form,
   Game,
   Ingredient,
+  Keyword,
   ObjectReference,
+  printConsole,
   Quest,
   Weapon,
 } from "skyrimPlatform"
@@ -277,9 +279,39 @@ export function DoSell() {
 }
 
 export namespace Autocraft {
+  export namespace Checking {
+    const uIdToForm = (f: string) => FormLib.GetFormFromUniqueId(f)
+    const IsForm = (item: Form, forms: (Form | null)[]) =>
+      forms.filter((v) => item.getFormID() === v?.getFormID()).length > 0
+    const HasKeyword = (item: Form, keys: (Form | null)[]) =>
+      keys.filter((k) => item.hasKeyword(Keyword.from(k))).length > 0
+
+    /** Checks if an item is from autocraft as defined in config */
+    export function FromConfig(
+      keywords: string[],
+      forms: string[],
+      exceptions: string[]
+    ) {
+      return () => {
+        const fms = forms.map(uIdToForm)
+        const ks = keywords.map(uIdToForm)
+        const ex = exceptions.map(uIdToForm)
+        return (i: FormNull): boolean => {
+          if (!i || IsForm(i, ex)) return false
+          if (IsForm(i, fms) || HasKeyword(i, ks)) return true
+          return false
+        }
+      }
+    }
+  }
+
   const enum ChestType {
     ingredients = "ingredients",
+    smithing = "smithing",
+    enchanting = "enchanting",
+    home = "home",
   }
+
   /** Player is used as dummy Form so global chests FormIds can be saved to database */
   const Player = () => Game.getPlayer() as Actor
 
@@ -356,6 +388,15 @@ export namespace Autocraft {
       })
     }
 
+  /** Made to deal with the fact that Game functions can only be called in some
+   * specific contexts.
+   */
+  const ExecuteTransferLazy =
+    (from: ObjFunc, to: ObjFunc, IsValid: () => CategoryFunc) => () => {
+      const IsV = IsValid()
+      ExecuteTransfer(from, to, IsV)()
+    }
+
   function CreateAutocraft(
     chest: ChestType,
     IsSomething: CategoryFunc
@@ -363,6 +404,20 @@ export namespace Autocraft {
     const AllAreValid = () => true
     return {
       SendTo: ExecuteTransfer(Player, Chest(chest), IsSomething), // TODO: Test if item is quest locked
+      GetFrom: ExecuteTransfer(Chest(chest), Player, AllAreValid),
+    }
+  }
+
+  /** Made to deal with the fact that Game functions can only be called in some
+   * specific contexts.
+   */
+  function CreateAutocraftLazy(
+    chest: ChestType,
+    IsSomething: () => CategoryFunc
+  ): AutocraftFunctions {
+    const AllAreValid = () => true
+    return {
+      SendTo: ExecuteTransferLazy(Player, Chest(chest), IsSomething), // TODO: Test if item is quest locked
       GetFrom: ExecuteTransfer(Chest(chest), Player, AllAreValid),
     }
   }
@@ -383,4 +438,23 @@ export namespace Autocraft {
     ChestType.ingredients,
     IsAutoIngredient
   )
+
+  export const Smithing = CreateAutocraft(ChestType.smithing, IsAutoIngredient)
+
+  const h = mcm.autocrafting.home
+  export const Home = CreateAutocraftLazy(
+    ChestType.home,
+    Checking.FromConfig(h.keywords, h.forms, h.exceptions)
+  )
+
+  export const All: AutocraftFunctions = {
+    SendTo: () => {
+      Ingredients.SendTo()
+      Home.SendTo()
+    },
+    GetFrom: () => {
+      Ingredients.GetFrom()
+      Home.GetFrom()
+    },
+  }
 }

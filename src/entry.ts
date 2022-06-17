@@ -1,7 +1,10 @@
 import { AutocraftEnter, AutocraftExit } from "autocraft"
+import { FormLib } from "DMLib"
 import {
   AmmoL,
   ArmorsL,
+  AutoAllL,
+  AutoHomeL,
   AutoIngredientsL,
   BooksL,
   CheckInvalidInverseHk,
@@ -11,9 +14,9 @@ import {
   SkimpyL,
   WeaponsL,
 } from "hotkeys"
-import { DoMarkItems, DoSell } from "items"
-import { LA } from "shared"
-import { on, once } from "skyrimPlatform"
+import { Autocraft, DoMarkItems, DoSell } from "items"
+import { LA, mcm } from "shared"
+import { on, once, printConsole } from "skyrimPlatform"
 
 export function main() {
   on("update", () => {
@@ -28,7 +31,11 @@ export function main() {
     SkimpyL()
 
     AutoIngredientsL()
+    AutoHomeL()
+    AutoAllL()
   })
+
+  function T() {}
 
   once("update", () => {
     CheckInvalidInverseHk()
