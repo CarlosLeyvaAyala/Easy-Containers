@@ -14,8 +14,8 @@ import {
   Ingredient,
   Keyword,
   ObjectReference,
-  printConsole,
   Quest,
+  Utility,
   Weapon,
 } from "skyrimPlatform"
 import { chestPath, itemsPath, LE, LI, LV, LVT, mcm } from "./shared"
@@ -475,16 +475,32 @@ export namespace Autocraft {
 
   export const All: AutocraftFunctions = {
     SendTo: () => {
-      Ingredients.SendTo()
-      Enchanting.SendTo()
-      Smithing.SendTo()
-      Home.SendTo()
+      // Need to wait because this makes UIExtensions to go slow if not waiting between transfers
+      const t = 0.1
+      const f = async () => {
+        Ingredients.SendTo()
+        await Utility.wait(t)
+        Enchanting.SendTo()
+        await Utility.wait(t)
+        Smithing.SendTo()
+        await Utility.wait(t)
+        Home.SendTo()
+      }
+      f()
     },
     GetFrom: () => {
-      Ingredients.GetFrom()
-      Enchanting.GetFrom()
-      Smithing.GetFrom()
-      Home.GetFrom()
+      // Need to wait because this makes UIExtensions to go slow if not waiting between transfers
+      const t = 0.1
+      const f = async () => {
+        Ingredients.GetFrom()
+        await Utility.wait(t)
+        Enchanting.GetFrom()
+        await Utility.wait(t)
+        Smithing.GetFrom()
+        await Utility.wait(t)
+        Home.GetFrom()
+      }
+      f()
     },
   }
 }
