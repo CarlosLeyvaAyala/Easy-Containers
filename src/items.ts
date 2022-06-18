@@ -303,6 +303,23 @@ export namespace Autocraft {
         }
       }
     }
+
+    /** Checks if an item is a valid soul gem */
+    export function IsSoulGem() {
+      return () => {
+        const e = mcm.autocrafting.enchanting
+        const fill = e.filled.map(uIdToForm)
+        const empty = e.empty.map(uIdToForm)
+        const except = e.exceptions.map(uIdToForm)
+
+        return (i: FormNull): boolean => {
+          if (!i || IsForm(i, except)) return false
+          if (IsForm(i, fill)) return e.storeFilled
+          if (IsForm(i, empty)) return e.storeEmpty
+          return false
+        }
+      }
+    }
   }
 
   const enum ChestType {
@@ -439,7 +456,16 @@ export namespace Autocraft {
     IsAutoIngredient
   )
 
-  export const Smithing = CreateAutocraft(ChestType.smithing, IsAutoIngredient)
+  export const Enchanting = CreateAutocraftLazy(
+    ChestType.enchanting,
+    Checking.IsSoulGem()
+  )
+
+  const s = mcm.autocrafting.smithing
+  export const Smithing = CreateAutocraftLazy(
+    ChestType.smithing,
+    Checking.FromConfig(s.keywords, s.forms, s.exceptions)
+  )
 
   const h = mcm.autocrafting.home
   export const Home = CreateAutocraftLazy(
@@ -450,10 +476,14 @@ export namespace Autocraft {
   export const All: AutocraftFunctions = {
     SendTo: () => {
       Ingredients.SendTo()
+      Enchanting.SendTo()
+      Smithing.SendTo()
       Home.SendTo()
     },
     GetFrom: () => {
       Ingredients.GetFrom()
+      Enchanting.GetFrom()
+      Smithing.GetFrom()
       Home.GetFrom()
     },
   }

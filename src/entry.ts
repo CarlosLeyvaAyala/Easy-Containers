@@ -4,8 +4,10 @@ import {
   AmmoL,
   ArmorsL,
   AutoAllL,
+  AutoEnchantingL,
   AutoHomeL,
   AutoIngredientsL,
+  AutoSmithingL,
   BooksL,
   CheckInvalidInverseHk,
   MarkedL,
@@ -31,6 +33,8 @@ export function main() {
     SkimpyL()
 
     AutoIngredientsL()
+    AutoEnchantingL()
+    AutoSmithingL()
     AutoHomeL()
     AutoAllL()
   })

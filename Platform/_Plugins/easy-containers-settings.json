@@ -26,8 +26,14 @@
     },
     "smithing": {
       "onFurniture": false,
-      "keywords": ["Skyrim.esm|0x914ec"],
-      "forms": [],
+      "keywords": [
+        "Skyrim.esm|0xbecd7",
+        "Skyrim.esm|0x914ea",
+        "Skyrim.esm|0x914eb",
+        "Skyrim.esm|0x914ec",
+        "Skyrim.esm|0x914ed"
+      ],
+      "forms": ["Skyrim.esm|0x34cd6", "Dragonborn.esm|0x17749"],
       "exceptions": ["HearthFires.esm|0x306c"]
     },
     "enchanting": {

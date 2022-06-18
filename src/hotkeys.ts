@@ -93,6 +93,8 @@ const Books = CreateListeningFuncs("book", "allBooks")
 const Skimpy = CreateListeningFuncs("skimpy")
 
 const AutoIngredients = CreateListeningFuncs("autoIngredients")
+const AutoSmithing = CreateListeningFuncs("autoSmithing")
+const AutoEnchanting = CreateListeningFuncs("autoEnchanting")
 const AutoHome = CreateListeningFuncs("autoHome")
 const AutoAll = CreateListeningFuncs("autoAll")
 
@@ -114,6 +116,10 @@ export const AutoIngredientsL = GenAutocraftL(
   AutoIngredients,
   Autocraft.Ingredients
 )
-
+export const AutoEnchantingL = GenAutocraftL(
+  AutoEnchanting,
+  Autocraft.Enchanting
+)
+export const AutoSmithingL = GenAutocraftL(AutoSmithing, Autocraft.Smithing)
 export const AutoHomeL = GenAutocraftL(AutoHome, Autocraft.Home)
 export const AutoAllL = GenAutocraftL(AutoAll, Autocraft.All)
