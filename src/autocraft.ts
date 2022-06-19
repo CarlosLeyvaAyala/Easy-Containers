@@ -1,7 +1,7 @@
 import { FormLib, Hotkeys } from "DMLib"
 import { Autocraft } from "items"
 import { mcm } from "shared"
-import { FurnitureEvent, ObjectReference } from "skyrimPlatform"
+import { Form, FurnitureEvent, ObjectReference } from "skyrimPlatform"
 
 const IsPlayer = (f: ObjectReference) => f.getFormID() === FormLib.playerId
 const IsAlchemyLab = FormLib.IsAlchemyLab
@@ -30,6 +30,11 @@ export function AutocraftExit(e: FurnitureEvent) {
 
 function FurnitureAction(e: FurnitureEvent, a: ActionFunctions) {
   if (!IsPlayer(e.actor)) return
-  if (IsAlchemyLab(e.target) && mcm.autocrafting.alchemy.onFurniture)
-    a.Alchemy()
+
+  FormLib.WaitForm(e.target, 0.1, (frm: Form) => {
+    const target = ObjectReference.from(frm)
+    if (!target) return
+    const cfg = mcm.autocrafting
+    if (IsAlchemyLab(target) && cfg.alchemy.onFurniture) a.Alchemy()
+  })
 }

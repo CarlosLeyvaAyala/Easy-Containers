@@ -395,7 +395,7 @@ export namespace Autocraft {
   type ObjFunc = () => ObjectReference | null
 
   const ExecuteTransfer =
-    (from: ObjFunc, to: ObjFunc, IsValid: CategoryFunc) => () => {
+    (from: ObjFunc, to: ObjFunc, IsValid: CategoryFunc, msg: string) => () => {
       const f = from()
       const t = to()
       if (!f || !t) return
@@ -403,25 +403,31 @@ export namespace Autocraft {
       FormLib.ForEachItemR(f, (item) => {
         TransferItem(item, f, t, IsValid)
       })
+      Debug.notification(msg)
     }
 
   /** Made to deal with the fact that Game functions can only be called in some
    * specific contexts.
    */
   const ExecuteTransferLazy =
-    (from: ObjFunc, to: ObjFunc, IsValid: () => CategoryFunc) => () => {
+    (from: ObjFunc, to: ObjFunc, IsValid: () => CategoryFunc, msg: string) =>
+    () => {
       const IsV = IsValid()
-      ExecuteTransfer(from, to, IsV)()
+      ExecuteTransfer(from, to, IsV, msg)()
     }
+
+  const SentMsg = (msg: string) => `All ${msg} were stored successfully.`
+  const GetMsg = (msg: string) => `All ${msg} were retrieved successfully.`
 
   function CreateAutocraft(
     chest: ChestType,
-    IsSomething: CategoryFunc
+    IsSomething: CategoryFunc,
+    msg: string
   ): AutocraftFunctions {
     const AllAreValid = () => true
     return {
-      SendTo: ExecuteTransfer(Player, Chest(chest), IsSomething), // TODO: Test if item is quest locked
-      GetFrom: ExecuteTransfer(Chest(chest), Player, AllAreValid),
+      SendTo: ExecuteTransfer(Player, Chest(chest), IsSomething, SentMsg(msg)), // TODO: Test if item is quest locked
+      GetFrom: ExecuteTransfer(Chest(chest), Player, AllAreValid, GetMsg(msg)),
     }
   }
 
@@ -430,12 +436,18 @@ export namespace Autocraft {
    */
   function CreateAutocraftLazy(
     chest: ChestType,
-    IsSomething: () => CategoryFunc
+    IsSomething: () => CategoryFunc,
+    msg: string
   ): AutocraftFunctions {
     const AllAreValid = () => true
     return {
-      SendTo: ExecuteTransferLazy(Player, Chest(chest), IsSomething), // TODO: Test if item is quest locked
-      GetFrom: ExecuteTransfer(Chest(chest), Player, AllAreValid),
+      SendTo: ExecuteTransferLazy(
+        Player,
+        Chest(chest),
+        IsSomething,
+        SentMsg(msg)
+      ), // TODO: Test if item is quest locked
+      GetFrom: ExecuteTransfer(Chest(chest), Player, AllAreValid, GetMsg(msg)),
     }
   }
 
@@ -453,24 +465,28 @@ export namespace Autocraft {
 
   export const Ingredients = CreateAutocraft(
     ChestType.ingredients,
-    IsAutoIngredient
+    IsAutoIngredient,
+    "ingredients"
   )
 
   export const Enchanting = CreateAutocraftLazy(
     ChestType.enchanting,
-    Checking.IsSoulGem()
+    Checking.IsSoulGem(),
+    "soul gems"
   )
 
   const s = mcm.autocrafting.smithing
   export const Smithing = CreateAutocraftLazy(
     ChestType.smithing,
-    Checking.FromConfig(s.keywords, s.forms, s.exceptions)
+    Checking.FromConfig(s.keywords, s.forms, s.exceptions),
+    "smithing items"
   )
 
   const h = mcm.autocrafting.home
   export const Home = CreateAutocraftLazy(
     ChestType.home,
-    Checking.FromConfig(h.keywords, h.forms, h.exceptions)
+    Checking.FromConfig(h.keywords, h.forms, h.exceptions),
+    "building items"
   )
 
   export const All: AutocraftFunctions = {
@@ -490,7 +506,7 @@ export namespace Autocraft {
     },
     GetFrom: () => {
       // Need to wait because this makes UIExtensions to go slow if not waiting between transfers
-      const t = 0.1
+      const t = 0.05
       const f = async () => {
         Ingredients.GetFrom()
         await Utility.wait(t)
@@ -499,6 +515,7 @@ export namespace Autocraft {
         Smithing.GetFrom()
         await Utility.wait(t)
         Home.GetFrom()
+        Debug.messageBox("All items were transferred")
       }
       f()
     },

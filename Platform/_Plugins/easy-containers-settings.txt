@@ -34,7 +34,7 @@
         "Skyrim.esm|0x914ed"
       ],
       "forms": ["Skyrim.esm|0x34cd6", "Dragonborn.esm|0x17749"],
-      "exceptions": ["HearthFires.esm|0x306c"]
+      "exceptions": ["HearthFires.esm|0x306c", "Skyrim.esm|0x4e4e6"] 
     },
     "enchanting": {
       "onFurniture": false,
