@@ -1,5 +1,4 @@
 import { AutocraftEnter, AutocraftExit } from "autocraft"
-import { FormLib } from "DMLib"
 import {
   AmmoL,
   ArmorsL,
@@ -16,9 +15,9 @@ import {
   SkimpyL,
   WeaponsL,
 } from "hotkeys"
-import { Autocraft, DoMarkItems, DoSell } from "items"
-import { LA, mcm } from "shared"
-import { on, once, printConsole } from "skyrimPlatform"
+import { DoMarkItems, DoSell } from "items"
+import { LA } from "shared"
+import { on, once } from "skyrimPlatform"
 
 export function main() {
   on("update", () => {

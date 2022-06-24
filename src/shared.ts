@@ -30,6 +30,7 @@ export const GetHotkey = H.GetAndLog(LAT, GHk)
 export interface EcSettings {
   loggingLevel: string
   sellingMultiplier: number
+  waitAutoAll: number
   hotkeys: { [key: string]: string }
   autocrafting: Autocrafting
 }

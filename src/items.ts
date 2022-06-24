@@ -1,4 +1,7 @@
-import { Combinators as C, FormLib, Hotkeys } from "DMLib"
+import { Combinators as C, Hotkeys } from "DMLib"
+import { forEachItemR } from "DmLib/Form/forEachItem"
+import { getFormFromUniqueId } from "DmLib/Form/getFormFromUniqueId"
+import { getPersistentChest } from "DmLib/Form/persistentChest"
 import * as JDB from "JContainers/JDB"
 import * as JFormMap from "JContainers/JFormMap"
 import { ArmorArg, IsNotRegistered, IsRegistered } from "skimpify-api"
@@ -96,7 +99,7 @@ export function DoMarkItems() {
     (c, h) => {
       let n = 0
       let i = 0
-      FormLib.ForEachItemR(c, (item) => {
+      forEachItemR(c, (item) => {
         const name = item?.getName()
         const exists = LVT(
           `Trying to add ${name} to database. Already added?`,
@@ -133,7 +136,7 @@ function DoTransferItems(IsInvalid: InvalidItemFunc, msg: string = "items") {
       (c, h) => {
         const p = Game.getPlayer() as Actor
         let n = 0
-        FormLib.ForEachItemR(p, (item) => {
+        forEachItemR(p, (item) => {
           const Invalid = (_: FormNull) =>
             IsInvalid(item, h, c) || IsEquipOrFav(item, p)
 
@@ -265,7 +268,7 @@ export function DoSell() {
   const h = GetDbHandle()
   let gold = 0
   let n = 0
-  FormLib.ForEachItemR(p, (i) => {
+  forEachItemR(p, (i) => {
     if (!i || IsNotDbRegistered(i, h) || IsEquipOrFav(i, p)) return
     const q = p.getItemCount(i)
     gold += i.getGoldValue() * q * mcm.sellingMultiplier
@@ -280,7 +283,7 @@ export function DoSell() {
 
 export namespace Autocraft {
   export namespace Checking {
-    const uIdToForm = (f: string) => FormLib.GetFormFromUniqueId(f)
+    const uIdToForm = (f: string) => getFormFromUniqueId(f)
     const IsForm = (item: Form, forms: (Form | null)[]) =>
       forms.filter((v) => item.getFormID() === v?.getFormID()).length > 0
     const HasKeyword = (item: Form, keys: (Form | null)[]) =>
@@ -327,6 +330,7 @@ export namespace Autocraft {
     smithing = "smithing",
     enchanting = "enchanting",
     home = "home",
+    autoAll = "autoAll",
   }
 
   /** Player is used as dummy Form so global chests FormIds can be saved to database */
@@ -361,11 +365,7 @@ export namespace Autocraft {
         JFormMap.setForm(h, Player(), frm)
         SaveChestDbHandle(h, path)
       }
-      return FormLib.GetPersistentChest(
-        Getter,
-        Setter,
-        LogNoChestCreated(chest)
-      )
+      return getPersistentChest(Getter, Setter, LogNoChestCreated(chest))
     }
   }
 
@@ -394,16 +394,27 @@ export namespace Autocraft {
 
   type ObjFunc = () => ObjectReference | null
 
+  function OpenChest(C: ObjFunc) {
+    return () => {
+      const container = C()
+      if (!container) return
+      container.activate(Game.getPlayer(), true)
+    }
+  }
+
   const ExecuteTransfer =
-    (from: ObjFunc, to: ObjFunc, IsValid: CategoryFunc, msg: string) => () => {
+    (from: ObjFunc, to: ObjFunc, IsValid: CategoryFunc, msg: string = "") =>
+    () => {
       const f = from()
       const t = to()
       if (!f || !t) return
+      const IsV = (i: FormNull) =>
+        !Armor.from(i) && !Weapon.from(i) && IsValid(i)
 
-      FormLib.ForEachItemR(f, (item) => {
-        TransferItem(item, f, t, IsValid)
+      forEachItemR(f, (item) => {
+        TransferItem(item, f, t, IsV)
       })
-      Debug.notification(msg)
+      if (msg) Debug.notification(msg)
     }
 
   /** Made to deal with the fact that Game functions can only be called in some
@@ -419,35 +430,33 @@ export namespace Autocraft {
   const SentMsg = (msg: string) => `All ${msg} were stored successfully.`
   const GetMsg = (msg: string) => `All ${msg} were retrieved successfully.`
 
-  function CreateAutocraft(
-    chest: ChestType,
-    IsSomething: CategoryFunc,
-    msg: string
-  ): AutocraftFunctions {
-    const AllAreValid = () => true
-    return {
-      SendTo: ExecuteTransfer(Player, Chest(chest), IsSomething, SentMsg(msg)), // TODO: Test if item is quest locked
-      GetFrom: ExecuteTransfer(Chest(chest), Player, AllAreValid, GetMsg(msg)),
-    }
+  type IsFunction = {
+    kind: "direct"
+    execute: CategoryFunc
   }
 
-  /** Made to deal with the fact that Game functions can only be called in some
-   * specific contexts.
-   */
-  function CreateAutocraftLazy(
+  /** Deals with the fact that Game functions can only be called in some specific contexts. */
+  type IsFunctionLazy = {
+    kind: "lazy"
+    lazy: () => CategoryFunc
+  }
+
+  type IdentityFunc = IsFunction | IsFunctionLazy
+
+  function CreateAutocraft(
     chest: ChestType,
-    IsSomething: () => CategoryFunc,
+    IsSomething: IdentityFunc,
     msg: string
   ): AutocraftFunctions {
-    const AllAreValid = () => true
+    const P = Player
+    const C = Chest(chest)
+    const Send =
+      IsSomething.kind === "direct"
+        ? ExecuteTransfer(P, C, IsSomething.execute, SentMsg(msg))
+        : ExecuteTransferLazy(P, C, IsSomething.lazy, SentMsg(msg))
     return {
-      SendTo: ExecuteTransferLazy(
-        Player,
-        Chest(chest),
-        IsSomething,
-        SentMsg(msg)
-      ), // TODO: Test if item is quest locked
-      GetFrom: ExecuteTransfer(Chest(chest), Player, AllAreValid, GetMsg(msg)),
+      SendTo: Send, // TODO: Test if item is quest locked
+      GetFrom: OpenChest(C), //ExecuteTransfer(C, P, AllAreValid, GetMsg(msg)),
     }
   }
 
@@ -465,59 +474,66 @@ export namespace Autocraft {
 
   export const Ingredients = CreateAutocraft(
     ChestType.ingredients,
-    IsAutoIngredient,
+    { kind: "direct", execute: IsAutoIngredient },
     "ingredients"
   )
 
-  export const Enchanting = CreateAutocraftLazy(
+  export const Enchanting = CreateAutocraft(
     ChestType.enchanting,
-    Checking.IsSoulGem(),
+    { kind: "lazy", lazy: Checking.IsSoulGem() },
     "soul gems"
   )
 
   const s = mcm.autocrafting.smithing
-  export const Smithing = CreateAutocraftLazy(
+  export const Smithing = CreateAutocraft(
     ChestType.smithing,
-    Checking.FromConfig(s.keywords, s.forms, s.exceptions),
+    {
+      kind: "lazy",
+      lazy: Checking.FromConfig(s.keywords, s.forms, s.exceptions),
+    },
     "smithing items"
   )
 
   const h = mcm.autocrafting.home
-  export const Home = CreateAutocraftLazy(
+  export const Home = CreateAutocraft(
     ChestType.home,
-    Checking.FromConfig(h.keywords, h.forms, h.exceptions),
+    {
+      kind: "lazy",
+      lazy: Checking.FromConfig(h.keywords, h.forms, h.exceptions),
+    },
     "building items"
   )
+
+  // const t = mcm.waitAutoAll
 
   export const All: AutocraftFunctions = {
     SendTo: () => {
       // Need to wait because this makes UIExtensions to go slow if not waiting between transfers
-      const t = 0.1
+      const Fs = [
+        Ingredients.SendTo,
+        Enchanting.SendTo,
+        Smithing.SendTo,
+        Home.SendTo,
+      ]
       const f = async () => {
-        Ingredients.SendTo()
-        await Utility.wait(t)
-        Enchanting.SendTo()
-        await Utility.wait(t)
-        Smithing.SendTo()
-        await Utility.wait(t)
-        Home.SendTo()
+        for (var i = 0; i < Fs.length; i++) {
+          Fs[i]()
+          await Utility.wait(mcm.waitAutoAll)
+        }
+        Debug.notification("All items were stored")
       }
       f()
     },
     GetFrom: () => {
-      // Need to wait because this makes UIExtensions to go slow if not waiting between transfers
-      const t = 0.05
-      const f = async () => {
-        Ingredients.GetFrom()
-        await Utility.wait(t)
-        Enchanting.GetFrom()
-        await Utility.wait(t)
-        Smithing.GetFrom()
-        await Utility.wait(t)
-        Home.GetFrom()
-        Debug.messageBox("All items were transferred")
-      }
-      f()
+      const AllAreValid = () => true
+
+      const C = Chest(ChestType.autoAll)
+      ExecuteTransfer(Chest(ChestType.enchanting), C, AllAreValid)()
+      ExecuteTransfer(Chest(ChestType.home), C, AllAreValid)()
+      ExecuteTransfer(Chest(ChestType.ingredients), C, AllAreValid)()
+      ExecuteTransfer(Chest(ChestType.smithing), C, AllAreValid)()
+      C()?.activate(Game.getPlayer(), true)
+      // ExecuteTransfer(C, Chest(ChestType.ingredients), IsAutoIngredient)
     },
   }
 }

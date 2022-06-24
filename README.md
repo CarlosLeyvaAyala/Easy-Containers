@@ -31,6 +31,10 @@ You'll need these mods to make it work.
 - [Skyrim Platform][]
 - [JContainers][]
 
+# Known issues
+
+Skyrim doesn't seem to like when you transfer many items from a chest to the player at Skyrim Platform speeds.
+
 # Developing
 
 ## Dependencies
