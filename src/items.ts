@@ -258,7 +258,7 @@ export namespace Category {
 function TranferSkimpy(f: (a: ArmorArg) => boolean) {
   return (i: FormNull) => {
     const aa = Armor.from(i)
-    return !aa ? false : f(aa)
+    return !aa ? true : f(aa)
   }
 }
 
