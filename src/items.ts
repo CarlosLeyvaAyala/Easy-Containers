@@ -1,6 +1,6 @@
 import { Combinators as C, Hotkeys } from "DMLib"
 import { forEachItemR } from "DmLib/Form/forEachItem"
-import { getFormFromUniqueId } from "DmLib/Form/getFormFromUniqueId"
+import { getFormFromUniqueId, getUniqueId } from "DmLib/Form/uniqueId"
 import { getPersistentChest } from "DmLib/Form/persistentChest"
 import * as JDB from "JContainers/JDB"
 import * as JFormMap from "JContainers/JFormMap"
@@ -92,32 +92,75 @@ const IsNotDbRegistered = (i: FormNull, h: DbHandle) => !IsDbRegistered(i, h)
 const IsEquipOrFav = (i: FormNull, a: Actor) =>
   a.isEquipped(i) || a.getEquippedObject(0) === i || Game.isObjectFavorited(i)
 
-/** Marks all items in some container. */
-export function DoMarkItems() {
+/**
+ * (Un)marks items inside some container.
+ * @param opDesc What the `notification` will tell the player.
+ * @param LogExist What to log if the item exists in the database.
+ * @param StopCondition When not to process an item existing in database.
+ * @param DbManipulate What to do with the item that will be processed.
+ * @param LogSuccess Whan to log in case the item was processed.
+ * @param ResultMsg What the `messagebox` will tell the player.
+ */
+function UnMarkItems(
+  opDesc: string,
+  LogExist: (itemName: string) => string,
+  StopCondition: (exsits: boolean) => boolean,
+  DbManipulate: (handle: number, item: Form) => void,
+  LogSuccess: (itemName: string) => string,
+  ResultMsg: (totalItems: number, processedItems: number) => string
+) {
   ManageItems(
-    "Marking items in container.",
+    opDesc,
     (c, h) => {
       let n = 0
       let i = 0
       forEachItemR(c, (item) => {
-        const name = item?.getName()
-        const exists = LVT(
-          `Trying to add ${name} to database. Already added?`,
-          JFormMap.hasKey(h, item)
-        )
+        if (!item) return
+        const iN = item.getName()
+        const name = iN !== "" ? iN : getUniqueId(item)
+        const exists = LVT(LogExist(name), JFormMap.hasKey(h, item))
 
         n++
-        if (exists) return
-        JFormMap.setInt(h, item, 0) // `value` is irrelevant; we only want the `key` (item) to be added
+        if (StopCondition(exists)) return
+        DbManipulate(h, item)
         i++
-        LI(`${name} was added to database`)
+        LI(LogSuccess(name))
       })
 
       SaveDbHandle(h)
-      return `${n} types of items were marked (${i} new)`
+      return ResultMsg(n, i)
     },
     C.K("Select a valid container")
   )
+}
+
+/** Marks all items in some container. */
+export function DoMarkItems() {
+  UnMarkItems(
+    "Marking items inside container.",
+    (name) => `Trying to add ${name} to database. Already added?`,
+    C.I,
+    (h, item) => JFormMap.setInt(h, item, 0), // `value` is irrelevant; we only want the `key` (item) to be added
+    (name) => `${name} was added to database`,
+    (n, i) => `${n} types of items were marked (${i} new)`
+  )
+}
+
+export function DoUnmarkItems() {
+  UnMarkItems(
+    "Unmarking items inside container.",
+    (name) => `Trying to remove ${name} from database. Already added?`,
+    (e) => !e,
+    (h, item) => JFormMap.removeKey(h, item),
+    (name) => `${name} was removed from database`,
+    (_, i) => `${i} types of items were unmarked`
+  )
+}
+
+export const Marking: TransferFunctions = {
+  Transfer: DoMarkItems,
+  TransferInv: DoUnmarkItems,
+  TransferAll: Hotkeys.DoNothing,
 }
 
 type InvalidItemFunc = (
@@ -232,7 +275,7 @@ export namespace Category {
   export const Ammos = CreateTransferFuncs(IsAmmo, "ammo")
   export const Books = CreateTransferFuncs(IsBook, "books")
 
-  export const Marked: TransferFunctions = {
+  export const Transfer: TransferFunctions = {
     /** Transfer only marked items. */
     Transfer: DoTransferItems(IsNotDbRegistered, "marked items"),
     /** Transfer only unmarked items. */

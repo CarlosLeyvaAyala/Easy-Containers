@@ -1,5 +1,5 @@
 import { Combinators as C, DebugLib as D, Hotkeys as H, Hotkeys } from "DMLib"
-import { Autocraft, Category, TransferFunctions } from "items"
+import { Autocraft, Category, Marking, TransferFunctions } from "items"
 import { GetHotkey, GHk, inverseHk, LE, modNameDisplay } from "shared"
 import { Debug } from "skyrimPlatform"
 
@@ -40,6 +40,7 @@ interface ListeningFunctions {
 
 /** Listen to some hotkey by its name in the settings file */
 const L = (k: string) => H.ListenTo(GetHotkey(k))
+/** Listen for inverse key */
 const LI = (k: string) => H.ListenTo(Inv(GHk(k)))
 
 function CreateListeningFuncs(
@@ -83,9 +84,9 @@ function GenAutocraftL(
   }
 }
 
-export const OnMark = L("mark")
+const Mark = CreateListeningFuncs("mark")
 export const OnSell = L("sell")
-const Marked = CreateListeningFuncs("transfer", "transferAll")
+const Transfer = CreateListeningFuncs("transfer", "transferAll")
 const Weapons = CreateListeningFuncs("weapon", "allWeapons")
 const Armors = CreateListeningFuncs("armor", "allArmors")
 const Ammos = CreateListeningFuncs("ammo", "allAmmo")
@@ -98,8 +99,10 @@ const AutoEnchanting = CreateListeningFuncs("autoEnchanting")
 const AutoHome = CreateListeningFuncs("autoHome")
 const AutoAll = CreateListeningFuncs("autoAll")
 
+/** Listen to hotkeys related to skimpy armors */
+export const MarkL = GenListeners(Mark, Marking)
 /** Listen to hotkeys related to marked items */
-export const MarkedL = GenListeners(Marked, Category.Marked)
+export const TransferL = GenListeners(Transfer, Category.Transfer)
 /** Listen to hotkeys related to armors */
 export const ArmorsL = GenListeners(Armors, Category.Armors)
 /** Listen to hotkeys related to weapons */

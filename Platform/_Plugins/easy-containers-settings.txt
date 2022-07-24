@@ -1,6 +1,7 @@
 {
   "loggingLevel": "error",
   "sellingMultiplier": 0.5,
+  "waitAutoAll": 0.10,
   "hotkeys": {
     "inverse": "Shift",
     "sell": "Ctrl Shift Enter",
@@ -38,7 +39,7 @@
     },
     "enchanting": {
       "onFurniture": false,
-      "storeEmpty": false,
+      "storeEmpty": true,
       "storeFilled": true,
       "filled": [
         "Skyrim.esm|0x2e4e3",

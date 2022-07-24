@@ -9,22 +9,22 @@ import {
   AutoSmithingL,
   BooksL,
   CheckInvalidInverseHk,
-  MarkedL,
-  OnMark,
+  MarkL,
   OnSell,
   SkimpyL,
+  TransferL,
   WeaponsL,
 } from "hotkeys"
-import { DoMarkItems, DoSell } from "items"
+import { DoSell } from "items"
 import { LA } from "shared"
 import { on, once } from "skyrimPlatform"
 
 export function main() {
   on("update", () => {
-    OnMark(DoMarkItems)
+    MarkL()
     OnSell(DoSell)
 
-    MarkedL()
+    TransferL()
     WeaponsL()
     ArmorsL()
     AmmoL()
