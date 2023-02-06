@@ -17,11 +17,12 @@ import {
   Ingredient,
   Keyword,
   ObjectReference,
+  printConsole,
   Quest,
   Utility,
   Weapon,
 } from "skyrimPlatform"
-import { chestPath, itemsPath, LE, LI, LV, LVT, mcm } from "./shared"
+import { chestPath, itemsPath, LA, LE, LI, LV, LVT, mcm } from "./shared"
 
 /** General item management function.
  *
@@ -320,7 +321,9 @@ export function DoSell() {
   })
 
   gold = Math.round(gold)
-  p.addItem(Game.getFormEx(0xf), gold, true)
+  let g = p.getItemCount(Game.getFormEx(0xf))
+  LA(g.toString())
+  p.addItem(Game.getFormEx(0xf), g + gold, true)
   Debug.messageBox(`${n} items were sold for ${gold}`)
 }
 
