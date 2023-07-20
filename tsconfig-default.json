@@ -1,32 +1,33 @@
 {
-  "compilerOptions": {
-    "alwaysStrict": true,
-    "noImplicitAny": true,
-    "noImplicitThis": true,
-    "strict": true,
-    "strictBindCallApply": true,
-    "strictFunctionTypes": true,
-    "strictNullChecks": true,
-    "strictPropertyInitialization": true,
-    "module": "System",
-    "target": "ES2017",
-    "lib": [
-      "ES2017"
-    ],
-    "paths": {
-      "*": [
-        "*",
-        "F:/SteamLibrary/steamapps/common/Skyrim Special Edition/Data/Platform/Modules/*",
-        "F:/SteamLibrary/steamapps/common/Skyrim Special Edition/Data/Platform/Modules/DmLib/*"
-      ],
-      "chai": [
-        "./node_modules/@types/chai"
-      ]
+    "compilerOptions": {
+        "alwaysStrict": true,
+        "noImplicitAny": true,
+        "noImplicitThis": true,
+        "strict": true,
+        "strictBindCallApply": true,
+        "strictFunctionTypes": true,
+        "strictNullChecks": true,
+        "strictPropertyInitialization": true,
+        "removeComments": true,
+        "module": "System",
+        "target": "ES2017",
+        "lib": [
+            "ES2017"
+        ],
+        "paths": {
+            "*": [
+                "*",
+                "F:/SteamLibrary/steamapps/common/Skyrim Special Edition/Data/Platform/Modules/*",
+                "F:/Skyrim SE/MO2/mods/DM-Lib-Typescript/DmLib/*"
+            ],
+            "chai": [
+                "./node_modules/@types/chai"
+            ]
+        },
+        "outFile": "F:/Skyrim SE/MO2/overwrite/Platform/Plugins/easy-containers.js",
+        "baseUrl": "."
     },
-    "outFile": "F:/Skyrim SE/MO2/overwrite/Platform/Plugins/easy-containers.js",
-    "baseUrl": "."
-  },
-  "include": [
-    "./*.ts"
-  ]
+    "include": [
+        "./*.ts"
+    ]
 }

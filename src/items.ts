@@ -1,7 +1,12 @@
-import { Combinators as C, Hotkeys } from "DMLib"
-import { forEachItemR } from "DmLib/Form/forEachItem"
-import { getFormFromUniqueId, getUniqueId } from "DmLib/Form/uniqueId"
-import { getPersistentChest } from "DmLib/Form/persistentChest"
+// import { Combinators as C, Hotkeys } from "DMLib"
+import { I, K } from "DmLib/Combinators"
+import {
+  forEachItemR,
+  getFormFromUniqueId,
+  getPersistentChest,
+  getUniqueId,
+} from "DmLib/Form"
+import { DoNothing, KeyPressEvt } from "DmLib/hotkeys"
 import * as JDB from "JContainers/JDB"
 import * as JFormMap from "JContainers/JFormMap"
 import { ArmorArg, IsNotRegistered, IsRegistered } from "skimpify-api"
@@ -17,12 +22,11 @@ import {
   Ingredient,
   Keyword,
   ObjectReference,
-  printConsole,
   Quest,
   Utility,
   Weapon,
 } from "skyrimPlatform"
-import { chestPath, itemsPath, LA, LE, LI, LV, LVT, mcm } from "./shared"
+import { LE, LI, LV, LVT, chestPath, itemsPath, mcm } from "./shared"
 
 /** General item management function.
  *
@@ -131,7 +135,7 @@ function UnMarkItems(
       SaveDbHandle(h)
       return ResultMsg(n, i)
     },
-    C.K("Select a valid container")
+    K("Select a valid container")
   )
 }
 
@@ -140,7 +144,7 @@ export function DoMarkItems() {
   UnMarkItems(
     "Marking items inside container.",
     (name) => `Trying to add ${name} to database. Already added?`,
-    C.I,
+    I,
     (h, item) => JFormMap.setInt(h, item, 0), // `value` is irrelevant; we only want the `key` (item) to be added
     (name) => `${name} was added to database`,
     (n, i) => `${n} types of items were marked (${i} new)`
@@ -161,7 +165,7 @@ export function DoUnmarkItems() {
 export const Marking: TransferFunctions = {
   Transfer: DoMarkItems,
   TransferInv: DoUnmarkItems,
-  TransferAll: Hotkeys.DoNothing,
+  TransferAll: DoNothing,
 }
 
 type InvalidItemFunc = (
@@ -188,7 +192,7 @@ function DoTransferItems(IsInvalid: InvalidItemFunc, msg: string = "items") {
         })
         return `${n} types of items were transferred`
       },
-      C.K("Select a valid container")
+      K("Select a valid container")
     )
 }
 
@@ -223,9 +227,9 @@ function TransferItem(
 type CategoryFunc = (i: FormNull) => boolean
 
 export interface TransferFunctions {
-  Transfer: Hotkeys.KeyPressEvt
-  TransferInv: Hotkeys.KeyPressEvt
-  TransferAll: Hotkeys.KeyPressEvt
+  Transfer: KeyPressEvt
+  TransferInv: KeyPressEvt
+  TransferAll: KeyPressEvt
 }
 
 const IsWeapon: CategoryFunc = (i: FormNull) => Weapon.from(i) !== null
@@ -290,7 +294,7 @@ export namespace Category {
     Transfer: DoTransferItems(TranferSkimpy(IsNotRegistered)),
     /** Transfer armors NOT registered in the Skimpify Framework. */
     TransferInv: DoTransferItems(TranferSkimpy(IsRegistered)),
-    TransferAll: Hotkeys.DoNothing,
+    TransferAll: DoNothing,
   }
 }
 
@@ -321,9 +325,10 @@ export function DoSell() {
   })
 
   gold = Math.round(gold)
-  let g = p.getItemCount(Game.getFormEx(0xf))
-  LA(g.toString())
-  p.addItem(Game.getFormEx(0xf), g + gold, true)
+  p.addItem(Game.getFormEx(0xf), gold, true)
+  //   let g = p.getItemCount(Game.getFormEx(0xf))
+  //   LA(g.toString())
+  //   p.addItem(Game.getFormEx(0xf), g + gold, true)
   Debug.messageBox(`${n} items were sold for ${gold}`)
 }
 
@@ -422,9 +427,9 @@ export namespace Autocraft {
 
   export interface AutocraftFunctions {
     /** Function for sending from player to autocraft chest. */
-    SendTo: Hotkeys.KeyPressEvt
+    SendTo: KeyPressEvt
     /** Function for sending from autocraft chest to player. */
-    GetFrom: Hotkeys.KeyPressEvt
+    GetFrom: KeyPressEvt
   }
 
   const BlankFunction = () => {}

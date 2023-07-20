@@ -2,7 +2,7 @@ import { FormLib, Hotkeys } from "DMLib"
 import { Autocraft } from "items"
 import { mcm } from "shared"
 import { Form, FurnitureEvent, ObjectReference } from "skyrimPlatform"
-import { playerId } from "DMLib/Actor/player"
+import { playerId } from "DmLib/Actor"
 
 const IsPlayer = (f: ObjectReference) => f.getFormID() === playerId
 const IsAlchemyLab = FormLib.IsAlchemyLab

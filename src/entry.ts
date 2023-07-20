@@ -14,7 +14,7 @@ import {
   SkimpyL,
   TransferL,
   WeaponsL,
-} from "hotkeys"
+} from "./hotkeys"
 import { DoSell } from "items"
 import { LA } from "shared"
 import { on, once } from "skyrimPlatform"

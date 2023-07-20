@@ -1,7 +1,8 @@
-import { Combinators as C, DebugLib as D, Hotkeys as H, Hotkeys } from "DMLib"
 import { Autocraft, Category, Marking, TransferFunctions } from "items"
 import { GetHotkey, GHk, inverseHk, LE, modNameDisplay } from "shared"
 import { Debug } from "skyrimPlatform"
+import { Hotkey, ListenTo, ListeningFunction, ToString } from "DmLib/hotkeys"
+import { R } from "DmLib/Log"
 
 let invalidInverse = false
 
@@ -16,32 +17,30 @@ const MarkInvalidInv = () => {
   invalidInverse = true
 }
 
-function Inv(h: Hotkeys.Hotkey): Hotkeys.Hotkey {
+function Inv(h: Hotkey): Hotkey {
   const E = () =>
-    LE(
-      `***ERROR*** Hotkey ${H.ToString(h)} already contains the inverse hotkey.`
-    )
-  const A = (v: boolean | undefined) => (v ? D.Log.R(E(), true) : true)
+    LE(`***ERROR*** Hotkey ${ToString(h)} already contains the inverse hotkey.`)
+  const A = (v: boolean | undefined) => (v ? R(E(), true) : true)
   let m = h.modifiers ? h.modifiers : {}
 
   if (inverseHk === "Alt") m.alt = A(m.alt)
   else if (inverseHk === "Ctrl") m.ctrl = A(m.ctrl)
   else if (inverseHk === "Shift") m.shift = A(m.shift)
-  else m.shift = C.Return(MarkInvalidInv(), true) // Default to shift and inform to player
+  else m.shift = R(MarkInvalidInv(), true) // Default to shift and inform to player
 
   return { hk: h.hk, modifiers: m }
 }
 
 interface ListeningFunctions {
-  OnTransfer: Hotkeys.ListeningFunction
-  OnTransferInv: Hotkeys.ListeningFunction
-  OnTransferAll?: Hotkeys.ListeningFunction
+  OnTransfer: ListeningFunction
+  OnTransferInv: ListeningFunction
+  OnTransferAll?: ListeningFunction
 }
 
 /** Listen to some hotkey by its name in the settings file */
-const L = (k: string) => H.ListenTo(GetHotkey(k))
+const L = (k: string) => ListenTo(GetHotkey(k))
 /** Listen for inverse key */
-const LI = (k: string) => H.ListenTo(Inv(GHk(k)))
+const LI = (k: string) => ListenTo(Inv(GHk(k)))
 
 function CreateListeningFuncs(
   hotkeyName: string,

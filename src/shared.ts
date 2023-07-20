@@ -1,13 +1,14 @@
-import { DebugLib as D, Hotkeys as H } from "DMLib"
 import { settings } from "skyrimPlatform"
+import { FromObject, GetAndLog } from "DmLib/hotkeys"
+import { ConsoleFmt, CreateAll, FileFmt, LevelFromSettings } from "DmLib/Log"
 
 export const modNameDisplay = "EasyContainers"
 const mod_name = "easy-containers"
-const d = D.Log.CreateAll(
+const d = CreateAll(
   modNameDisplay,
-  D.Log.LevelFromSettings(mod_name, "loggingLevel"),
-  D.Log.ConsoleFmt,
-  D.Log.FileFmt
+  LevelFromSettings(mod_name, "loggingLevel"),
+  ConsoleFmt,
+  FileFmt
 )
 
 /** Log **ALL** messages. */
@@ -22,10 +23,10 @@ export const LV = d.Verbose
 export const LVT = d.TapV
 
 /** Get hotkey from settings */
-export const GHk = (k: string) => H.FromObject(mod_name, "hotkeys", k)
+export const GHk = (k: string) => FromObject(mod_name, "hotkeys", k)
 
 /** Gets a hotkey and logs it to console. */
-export const GetHotkey = H.GetAndLog(LAT, GHk)
+export const GetHotkey = GetAndLog(LAT, GHk)
 
 export interface EcSettings {
   loggingLevel: string
