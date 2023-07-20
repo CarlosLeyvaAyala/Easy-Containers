@@ -86,6 +86,11 @@ function SaveDbHandle(h: number) {
   JDB.solveObjSetter(itemsPath, h, true)
 }
 
+export function ClearDb() {
+  SaveDbHandle(JFormMap.object())
+  Debug.messageBox("Easy Containers database was cleared")
+}
+
 type DbHandle = number
 type FormNull = Form | null
 
@@ -94,8 +99,11 @@ const IsDbRegistered = (i: FormNull, h: DbHandle) => JFormMap.hasKey(h, i)
 /** Is the item not registered in the database? */
 const IsNotDbRegistered = (i: FormNull, h: DbHandle) => !IsDbRegistered(i, h)
 
-const IsEquipOrFav = (i: FormNull, a: Actor) =>
-  a.isEquipped(i) || a.getEquippedObject(0) === i || Game.isObjectFavorited(i)
+const IsEquipOrFavOrNonPlayable = (i: FormNull, a: Actor) =>
+  a.isEquipped(i) ||
+  a.getEquippedObject(0) === i ||
+  Game.isObjectFavorited(i) ||
+  !i?.isPlayable()
 
 /**
  * (Un)marks items inside some container.
@@ -186,7 +194,7 @@ function DoTransferItems(IsInvalid: InvalidItemFunc, msg: string = "items") {
         let n = 0
         forEachItemR(p, (item) => {
           const Invalid = (_: FormNull) =>
-            IsInvalid(item, h, c) || IsEquipOrFav(item, p)
+            IsInvalid(item, h, c) || IsEquipOrFavOrNonPlayable(item, p)
 
           if (TransferItemByInvalid(item, p, c, Invalid)) n++
         })
@@ -317,7 +325,7 @@ export function DoSell() {
   let gold = 0
   let n = 0
   forEachItemR(p, (i) => {
-    if (!i || IsNotDbRegistered(i, h) || IsEquipOrFav(i, p)) return
+    if (!i || IsNotDbRegistered(i, h) || IsEquipOrFavOrNonPlayable(i, p)) return
     const q = p.getItemCount(i)
     gold += i.getGoldValue() * q * mcm.sellingMultiplier
     p.removeItem(i, q, true, null)

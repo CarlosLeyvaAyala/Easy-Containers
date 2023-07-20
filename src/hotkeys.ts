@@ -85,6 +85,7 @@ function GenAutocraftL(
 
 const Mark = CreateListeningFuncs("mark")
 export const OnSell = L("sell")
+export const OnClearDb = L("clearDb")
 const Transfer = CreateListeningFuncs("transfer", "transferAll")
 const Weapons = CreateListeningFuncs("weapon", "allWeapons")
 const Armors = CreateListeningFuncs("armor", "allArmors")

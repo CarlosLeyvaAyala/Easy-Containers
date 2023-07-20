@@ -5,6 +5,7 @@
   "hotkeys": {
     "inverse": "Shift",
     "sell": "Ctrl Shift Enter",
+    "clearDb": "Alt Ctrl Shift Num0",
     "mark": "Ctrl Num1",
     "transfer": "Ctrl Num2",
     "weapon": "Ctrl Num3",
@@ -39,7 +40,7 @@
     },
     "enchanting": {
       "onFurniture": false,
-      "storeEmpty": true,
+      "storeEmpty": false,
       "storeFilled": true,
       "filled": [
         "Skyrim.esm|0x2e4e3",

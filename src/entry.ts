@@ -10,12 +10,13 @@ import {
   BooksL,
   CheckInvalidInverseHk,
   MarkL,
+  OnClearDb,
   OnSell,
   SkimpyL,
   TransferL,
   WeaponsL,
 } from "./hotkeys"
-import { DoSell } from "items"
+import { ClearDb, DoSell } from "items"
 import { LA } from "shared"
 import { on, once } from "skyrimPlatform"
 
@@ -23,6 +24,7 @@ export function main() {
   on("update", () => {
     MarkL()
     OnSell(DoSell)
+    OnClearDb(ClearDb)
 
     TransferL()
     WeaponsL()
