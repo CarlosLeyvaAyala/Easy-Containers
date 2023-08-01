@@ -103,7 +103,8 @@ const IsEquipOrFavOrNonPlayable = (i: FormNull, a: Actor) =>
   a.isEquipped(i) ||
   a.getEquippedObject(0) === i ||
   Game.isObjectFavorited(i) ||
-  !i?.isPlayable()
+  !i?.isPlayable() ||
+  !i.getName()
 
 /**
  * (Un)marks items inside some container.
